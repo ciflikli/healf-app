@@ -101,7 +101,7 @@ async def dashboard():
                     <h3>📊 Upload Health Data</h3>
                     <div class="upload-zone" onclick="document.getElementById('csvFile').click()">
                         <div>📁 Click to upload CSV file</div>
-                        <small>Wearable data, daily metrics, health tracking</small>
+                        <small>Expected columns: date, metric_name, value, unit</small>
                     </div>
                     <input type="file" id="csvFile" accept=".csv" style="display: none;" onchange="uploadCSV(this)">
                 </div>
@@ -532,16 +532,23 @@ async def upload_csv(file: UploadFile = File(...)):
         conn = sqlite3.connect('health_data.db')
         cursor = conn.cursor()
         
-        # Assume CSV has columns: date, metric_name, value, unit
+        # Validate CSV has required columns: date, metric_name, value, unit
+        required_columns = ['date', 'metric_name', 'value', 'unit']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        
+        if missing_columns:
+            raise HTTPException(status_code=400, detail=f"CSV missing required columns: {missing_columns}. Expected: {required_columns}")
+        
+        # Process valid CSV data
         for row in df.iter_rows(named=True):
             cursor.execute('''
                 INSERT INTO health_metrics (metric_name, value, unit, measurement_date, source)
                 VALUES (?, ?, ?, ?, ?)
             ''', (
-                row.get('metric_name', 'unknown'),
-                float(row.get('value', 0)),
+                row['metric_name'],
+                float(row['value']),
                 row.get('unit', ''),
-                row.get('date', datetime.now().strftime('%Y-%m-%d')),
+                row['date'],
                 file.filename
             ))
         
