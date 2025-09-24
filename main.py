@@ -139,6 +139,28 @@ async def dashboard():
                 <div id="biomarkerChart" style="height: 400px;"></div>
             </div>
             
+            <div class="card">
+                <h3>🔬 Regression Discontinuity Analysis</h3>
+                <div style="margin-bottom: 20px;">
+                    <label for="rddMetricSelect" style="display: block; margin-bottom: 5px; font-weight: bold;">Select Health Metric:</label>
+                    <select id="rddMetricSelect" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                        <option value="">Choose a metric...</option>
+                        <option value="resting_heart_rate">Resting Heart Rate</option>
+                        <option value="stress_level">Stress Level</option>
+                        <option value="sleep_score">Sleep Score</option>
+                        <option value="steps">Steps</option>
+                        <option value="intensity_minutes">Intensity Minutes</option>
+                    </select>
+                    <button onclick="analyzeMetricRDD()" class="btn" style="margin-top: 10px;">Analyze Supplement Effect</button>
+                </div>
+                <div id="rddResults" style="min-height: 200px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                    <div style="text-align: center; color: #666;">
+                        <p>Select a health metric above to analyze supplement effectiveness using Regression Discontinuity Design</p>
+                        <small>This analysis measures whether there was a statistically significant change since supplementation started</small>
+                    </div>
+                </div>
+            </div>
+            
             <div class="grid">
                 <div class="metric-card">
                     <div class="metric-value">🟢</div>
@@ -246,6 +268,82 @@ async def dashboard():
                 } catch (error) {
                     alert('Failed to add supplement: ' + error.message);
                 }
+            }
+            
+            async function analyzeMetricRDD() {
+                const selectedMetric = document.getElementById('rddMetricSelect').value;
+                if (!selectedMetric) {
+                    alert('Please select a health metric first');
+                    return;
+                }
+                
+                const resultsDiv = document.getElementById('rddResults');
+                resultsDiv.innerHTML = '<div style="text-align: center; color: #666;">Analyzing supplement effect on ' + selectedMetric + '...</div>';
+                
+                try {
+                    const response = await fetch('/analyze-supplement-effect', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            'supplement_name': 'vitamin d',  // Default to vitamin d
+                            'target_metrics': [selectedMetric]
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        displayRDDResults(result, selectedMetric);
+                    } else {
+                        resultsDiv.innerHTML = '<p style="color: red;">Analysis failed: ' + result.detail + '</p>';
+                    }
+                } catch (error) {
+                    resultsDiv.innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+                }
+            }
+            
+            function displayRDDResults(result, metric) {
+                const effectData = result.metric_effects[metric];
+                const resultsDiv = document.getElementById('rddResults');
+                
+                if (effectData.error) {
+                    resultsDiv.innerHTML = '<p style="color: red;">Analysis Error: ' + effectData.error + '</p>';
+                    return;
+                }
+                
+                const isSignificant = effectData.statistically_significant;
+                const pValue = effectData.treatment_p_value;
+                const effect = effectData.treatment_effect;
+                const observations = effectData.n_observations;
+                
+                const significanceColor = isSignificant ? '#28a745' : '#dc3545';
+                const significanceIcon = isSignificant ? '✅' : '❌';
+                const effectDirection = effect > 0 ? 'increase' : 'decrease';
+                
+                let html = '<div style="border-left: 4px solid ' + significanceColor + '; padding-left: 15px;">';
+                html += '<h4 style="margin-top: 0; color: ' + significanceColor + ';">' + significanceIcon + ' RDD Analysis Results</h4>';
+                html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0;">';
+                html += '<div><strong>Effect Size:</strong><br>' + Math.abs(effect).toFixed(2) + ' point ' + effectDirection + '</div>';
+                html += '<div><strong>P-value:</strong><br>' + (pValue ? pValue.toFixed(4) : 'N/A') + '</div>';
+                html += '<div><strong>Significance:</strong><br>' + (isSignificant ? 'Significant' : 'Not Significant') + '</div>';
+                html += '<div><strong>Sample Size:</strong><br>' + observations + ' observations</div>';
+                html += '</div>';
+                
+                if (isSignificant) {
+                    html += '<div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; border-radius: 4px; margin: 10px 0;">';
+                    html += '<strong>🎯 Significant Result:</strong> The supplement had a statistically significant effect on ' + metric.replace('_', ' ') + '. ';
+                    html += 'There was a ' + Math.abs(effect).toFixed(1) + ' point ' + effectDirection + ' after supplementation started.';
+                    html += '</div>';
+                } else {
+                    html += '<div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin: 10px 0;">';
+                    html += '<strong>📊 No Significant Effect:</strong> The analysis did not detect a statistically significant change in ' + metric.replace('_', ' ') + ' after supplementation (p > 0.05).';
+                    html += '</div>';
+                }
+                
+                html += '<small style="color: #666; display: block; margin-top: 10px;">Analysis used Regression Discontinuity Design with 30-day bandwidth around supplement start date.</small>';
+                html += '</div>';
+                
+                resultsDiv.innerHTML = html;
             }
             
             async function generateInsights() {
