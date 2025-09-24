@@ -163,16 +163,16 @@
             <h3>🔮 Expected Biomarker Changes (Next Blood Test)</h3>
             <div class="form-row">
                 <label>Biomarker:</label>
-                <select id="deltaBiomarkerSelect">
-                    <option value="">Select biomarker...</option>
+                <select id="deltaBiomarkerSelect" onchange="updatePredictionDisplay()">
+                    <option value="">All biomarkers</option>
                 </select>
                 <label>Months Ahead:</label>
-                <select id="deltaMonthsSelect">
+                <select id="deltaMonthsSelect" onchange="updatePredictionDisplay()">
+                    <option value="">All timeframes</option>
                     <option value="3">3 months</option>
-                    <option value="6" selected>6 months</option>
+                    <option value="6">6 months</option>
                     <option value="12">12 months</option>
                 </select>
-                <button onclick="generateBiomarkerDeltas()" class="btn">Generate Predictions</button>
             </div>
             <div id="deltaPredictions" class="prediction-grid"></div>
         </div>
@@ -314,7 +314,7 @@
                 // Get unique biomarker names for delta prediction selector
                 const uniqueNames = [...new Set(biomarkersList.map(b => b.name))];
                 const selector = document.getElementById('deltaBiomarkerSelect');
-                selector.innerHTML = '<option value="">Select biomarker...</option>';
+                selector.innerHTML = '<option value="">All biomarkers</option>';
                 
                 uniqueNames.forEach(name => {
                     const option = document.createElement('option');
@@ -322,6 +322,9 @@
                     option.textContent = name;
                     selector.appendChild(option);
                 });
+                
+                // Load and display stored predictions automatically
+                await loadStoredPredictions();
                 
             } catch (error) {
                 console.error('Failed to load biomarkers:', error);
@@ -716,34 +719,94 @@
             Plotly.newPlot('decompositionChart', traces, layout);
         }
         
-        async function generateBiomarkerDeltas() {
-            const biomarker = document.getElementById('deltaBiomarkerSelect').value;
-            const months = document.getElementById('deltaMonthsSelect').value;
-            
-            if (!biomarker) {
-                alert('Please select a biomarker');
-                return;
-            }
-            
+        let storedPredictions = [];
+        
+        async function loadStoredPredictions() {
             try {
-                const response = await fetch(`/ai/biomarker-delta/${encodeURIComponent(biomarker)}?months_ahead=${months}`);
-                const prediction = await response.json();
+                const response = await fetch('/ai/stored-predictions');
+                storedPredictions = await response.json();
                 
-                if (prediction.error) {
-                    document.getElementById('deltaPredictions').innerHTML = `<p style="color: red;">${prediction.error}</p>`;
-                    return;
-                }
+                console.log(`Loaded ${storedPredictions.length} stored predictions`);
                 
-                // Create prediction card
-                createPredictionCard(prediction);
+                // Display all predictions initially
+                updatePredictionDisplay();
                 
             } catch (error) {
-                console.error('Biomarker delta prediction failed:', error);
-                document.getElementById('deltaPredictions').innerHTML = '<p style="color: red;">Prediction failed. Please try again.</p>';
+                console.error('Failed to load stored predictions:', error);
+                document.getElementById('deltaPredictions').innerHTML = '<p style="color: orange;">Predictions are being generated. Please refresh the page in a few minutes.</p>';
             }
         }
         
-        function createPredictionCard(prediction) {
+        function updatePredictionDisplay() {
+            const selectedBiomarker = document.getElementById('deltaBiomarkerSelect').value;
+            const selectedMonths = document.getElementById('deltaMonthsSelect').value;
+            
+            // Filter predictions based on selections
+            let filteredPredictions = storedPredictions;
+            
+            if (selectedBiomarker) {
+                filteredPredictions = filteredPredictions.filter(p => p.biomarker_name === selectedBiomarker);
+            }
+            
+            if (selectedMonths) {
+                filteredPredictions = filteredPredictions.filter(p => p.months_ahead == selectedMonths);
+            }
+            
+            // Display filtered predictions
+            displayPredictions(filteredPredictions);
+        }
+        
+        function displayPredictions(predictions) {
+            const container = document.getElementById('deltaPredictions');
+            
+            if (predictions.length === 0) {
+                container.innerHTML = '<p style="color: #666;">No predictions available for the selected filters.</p>';
+                return;
+            }
+            
+            let html = '';
+            
+            predictions.forEach(prediction => {
+                html += createPredictionCardHTML(prediction);
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function createPredictionCardHTML(prediction) {
+            const isImprovement = prediction.is_improvement;
+            const delta = prediction.predicted_delta;
+            const deltaClass = isImprovement ? 'improvement' : (delta > 0 ? 'increase' : 'decrease');
+            
+            return `
+                <div class="prediction-card ${deltaClass}">
+                    <div class="prediction-header">
+                        <h4>${prediction.biomarker_name}</h4>
+                        <span class="time-horizon">${prediction.months_ahead} months</span>
+                    </div>
+                    <div class="prediction-content">
+                        <div class="delta-info">
+                            <span class="delta-value">${delta > 0 ? '+' : ''}${delta}</span>
+                            <span class="improvement-indicator">${isImprovement ? '✅ Improvement' : '⚠️ Monitor'}</span>
+                        </div>
+                        <div class="prediction-details">
+                            <p><strong>Current:</strong> ${prediction.current_value}</p>
+                            <p><strong>Predicted:</strong> ${prediction.predicted_value}</p>
+                            <p><strong>Confidence:</strong> ${Math.round(prediction.confidence * 100)}%</p>
+                            <p><strong>Method:</strong> ${prediction.analysis_method}</p>
+                        </div>
+                        <div class="reasoning">
+                            <p>${prediction.reasoning}</p>
+                        </div>
+                        <div class="recommendation">
+                            <p><strong>Recommendation:</strong> ${prediction.recommendation}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createPredictionCard_DEPRECATED(prediction) {
             const cardClass = prediction.is_improvement ? 'prediction-improvement' : 
                              (Math.abs(prediction.predicted_delta) < 0.1 ? 'prediction-neutral' : 'prediction-decline');
             

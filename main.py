@@ -17,6 +17,73 @@ app = FastAPI(title="Health Data Analytics", version="1.0.0")
 biomarker_prediction_cache = {}
 CACHE_EXPIRY_HOURS = 1  # Cache results for 1 hour
 
+# Function to pre-generate predictions for all biomarkers
+async def pregenerate_all_biomarker_predictions():
+    """Generate predictions for all biomarkers at 3, 6, and 12 months and store in database"""
+    try:
+        print("Starting pre-generation of biomarker predictions...")
+        
+        # Get all biomarkers and supplements
+        biomarkers = await get_biomarkers()
+        supplements = await get_supplements()
+        
+        # Get unique biomarker names
+        unique_biomarkers = list(set([b['name'] for b in biomarkers]))
+        months_list = [3, 6, 12]
+        
+        conn = sqlite3.connect('health_data.db')
+        cursor = conn.cursor()
+        
+        predictions_generated = 0
+        
+        for biomarker_name in unique_biomarkers:
+            for months_ahead in months_list:
+                print(f"Generating prediction for {biomarker_name} at {months_ahead} months...")
+                
+                try:
+                    # Generate the prediction
+                    prediction = generate_biomarker_delta_predictions(
+                        biomarker_name, biomarkers, supplements, months_ahead
+                    )
+                    
+                    # Store in database (replace if exists)
+                    cursor.execute('''
+                        INSERT OR REPLACE INTO biomarker_predictions 
+                        (biomarker_name, months_ahead, predicted_delta, predicted_value, current_value,
+                         is_improvement, confidence, reasoning, recommendation, timeframe, 
+                         analysis_method, direction_context)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (
+                        biomarker_name,
+                        months_ahead,
+                        prediction.get('predicted_delta', 0),
+                        prediction.get('predicted_value', 0),
+                        prediction.get('current_value', 0),
+                        prediction.get('is_improvement', False),
+                        prediction.get('confidence', 0),
+                        prediction.get('reasoning', ''),
+                        prediction.get('recommendation', ''),
+                        prediction.get('timeframe', ''),
+                        prediction.get('analysis_method', ''),
+                        prediction.get('direction_context', '')
+                    ))
+                    
+                    predictions_generated += 1
+                    
+                except Exception as e:
+                    print(f"Failed to generate prediction for {biomarker_name} at {months_ahead} months: {e}")
+                    continue
+        
+        conn.commit()
+        conn.close()
+        
+        print(f"Pre-generation completed: {predictions_generated} predictions stored")
+        return {"message": f"Generated {predictions_generated} predictions", "total": predictions_generated}
+        
+    except Exception as e:
+        print(f"Pre-generation failed: {e}")
+        return {"error": f"Pre-generation failed: {str(e)}"}
+
 # Database initialization
 def init_database():
     conn = sqlite3.connect('health_data.db')
@@ -62,12 +129,47 @@ def init_database():
         )
     ''')
     
+    # Biomarker predictions table for pre-computed predictions
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS biomarker_predictions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            biomarker_name TEXT NOT NULL,
+            months_ahead INTEGER NOT NULL,
+            predicted_delta REAL NOT NULL,
+            predicted_value REAL NOT NULL,
+            current_value REAL NOT NULL,
+            is_improvement BOOLEAN,
+            confidence REAL NOT NULL,
+            reasoning TEXT,
+            recommendation TEXT,
+            timeframe TEXT,
+            analysis_method TEXT,
+            direction_context TEXT,
+            generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(biomarker_name, months_ahead)
+        )
+    ''')
+    
     conn.commit()
     conn.close()
 
 @app.on_event("startup")
 async def startup_event():
     init_database()
+    
+    # Schedule pre-generation of biomarker predictions in background (non-blocking)
+    import asyncio
+    import threading
+    
+    def run_pregeneration():
+        """Run pre-generation in a separate thread to avoid blocking startup"""
+        import asyncio
+        asyncio.run(pregenerate_all_biomarker_predictions())
+    
+    # Start pre-generation in background thread so it doesn't block server startup
+    thread = threading.Thread(target=run_pregeneration, daemon=True)
+    thread.start()
+    print("Pre-generation started in background thread")
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
@@ -426,41 +528,29 @@ async def get_rdd_plot_data(metric_name: str, intervention_date: str, bandwidth:
 async def get_biomarker_delta_prediction(biomarker_name: str, months_ahead: int = 6):
     """Get AI-powered biomarker delta prediction with directional improvement logic"""
     try:
-        print(f"DEBUG: Starting prediction for {biomarker_name}, {months_ahead} months")
-        
         # Create cache key from biomarker name and months ahead
         cache_key = f"{biomarker_name.lower()}_{months_ahead}"
         current_time = time.time()
-        
-        print(f"DEBUG: Cache key: {cache_key}")
         
         # Check cache first
         if cache_key in biomarker_prediction_cache:
             cached_data, cached_time = biomarker_prediction_cache[cache_key]
             # Return cached result if within expiry time (1 hour = 3600 seconds)
             if current_time - cached_time < CACHE_EXPIRY_HOURS * 3600:
-                print("DEBUG: Returning cached result")
                 # Create a copy of cached data and add cache indicators
                 result = cached_data.copy()
                 result["cached"] = True
                 result["cached_at"] = datetime.fromtimestamp(cached_time).isoformat()
                 return result
         
-        print("DEBUG: Cache miss - generating new prediction")
-        
         # Cache miss or expired - generate new prediction
         biomarkers = await get_biomarkers()
-        print(f"DEBUG: Got {len(biomarkers)} biomarkers")
-        
         supplements = await get_supplements()
-        print(f"DEBUG: Got {len(supplements)} supplements")
         
         # Generate delta prediction
-        print("DEBUG: Calling generate_biomarker_delta_predictions")
         prediction = generate_biomarker_delta_predictions(
             biomarker_name, biomarkers, supplements, months_ahead
         )
-        print("DEBUG: Got prediction result")
         
         # Create result with cache indicator and store clean copy in cache
         result = prediction.copy()
@@ -468,13 +558,60 @@ async def get_biomarker_delta_prediction(biomarker_name: str, months_ahead: int 
         
         # Store clean prediction (without cache indicators) in cache
         biomarker_prediction_cache[cache_key] = (prediction, current_time)
-        print("DEBUG: Cached result, returning")
         
         return result
     
     except Exception as e:
-        print(f"DEBUG: Exception in prediction endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Biomarker delta prediction failed: {str(e)}")
+
+
+@app.post("/ai/pregenerate-predictions")
+async def pregenerate_predictions():
+    """Pre-generate biomarker predictions for all biomarkers at 3, 6, and 12 months"""
+    result = await pregenerate_all_biomarker_predictions()
+    return result
+
+
+@app.get("/ai/stored-predictions")
+async def get_stored_predictions():
+    """Get all pre-generated biomarker predictions"""
+    try:
+        conn = sqlite3.connect('health_data.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT biomarker_name, months_ahead, predicted_delta, predicted_value, current_value,
+                   is_improvement, confidence, reasoning, recommendation, timeframe,
+                   analysis_method, direction_context, generated_at
+            FROM biomarker_predictions
+            ORDER BY biomarker_name, months_ahead
+        ''')
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        predictions = []
+        for row in rows:
+            predictions.append({
+                "biomarker_name": row[0],
+                "months_ahead": row[1], 
+                "predicted_delta": row[2],
+                "predicted_value": row[3],
+                "current_value": row[4],
+                "is_improvement": bool(row[5]),
+                "confidence": row[6],
+                "reasoning": row[7],
+                "recommendation": row[8],
+                "timeframe": row[9],
+                "analysis_method": row[10],
+                "direction_context": row[11],
+                "generated_at": row[12]
+            })
+        
+        return predictions
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch stored predictions: {str(e)}")
 
 
 @app.get("/health-metrics/unique")
