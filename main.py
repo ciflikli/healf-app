@@ -70,6 +70,52 @@ async def dashboard():
         return f.read()
 
 # API endpoints
+
+@app.post("/populate-supplement-biomarkers")
+async def populate_supplement_biomarkers():
+    """Use LLM to populate expected biomarkers for supplements"""
+    try:
+        from openai_insights import generate_supplement_biomarkers
+        
+        # Get supplements with empty expected_biomarkers
+        conn = sqlite3.connect('health_data.db')
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, name, dosage FROM supplements 
+            WHERE expected_biomarkers IS NULL OR expected_biomarkers = '' OR expected_biomarkers = 'None'
+        """)
+        supplements_to_update = cursor.fetchall()
+        
+        if not supplements_to_update:
+            conn.close()
+            return {"message": "All supplements already have expected biomarkers populated"}
+        
+        updated_count = 0
+        for supplement_id, name, dosage in supplements_to_update:
+            # Generate expected biomarkers using LLM
+            expected_biomarkers = await generate_supplement_biomarkers(name, dosage)
+            
+            if expected_biomarkers:
+                # Update database
+                cursor.execute("""
+                    UPDATE supplements 
+                    SET expected_biomarkers = ? 
+                    WHERE id = ?
+                """, (expected_biomarkers, supplement_id))
+                updated_count += 1
+        
+        conn.commit()
+        conn.close()
+        
+        return {
+            "message": f"Successfully populated expected biomarkers for {updated_count} supplements",
+            "updated_supplements": updated_count
+        }
+        
+    except Exception as e:
+        return {"error": f"Failed to populate supplement biomarkers: {str(e)}"}
+
 @app.post("/upload-csv")
 async def upload_csv(file: UploadFile = File(...)):
     if not file.filename or not file.filename.endswith('.csv'):

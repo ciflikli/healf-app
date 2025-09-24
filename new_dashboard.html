@@ -105,6 +105,10 @@
         <!-- 2. Supplement Data (Table View) -->
         <div class="card">
             <h3>💊 Supplement Data</h3>
+            <div class="form-row">
+                <button onclick="populateSupplementBiomarkers()" class="btn-secondary">🤖 Auto-populate Expected Biomarkers</button>
+                <small style="color: #666; margin-left: 15px;">Uses AI to determine which biomarkers each supplement should affect</small>
+            </div>
             <div id="supplementTable">
                 <table class="data-table">
                     <thead>
@@ -390,6 +394,40 @@
                 
             } catch (error) {
                 console.error('Failed to load supplement table:', error);
+            }
+        }
+        
+        async function populateSupplementBiomarkers() {
+            try {
+                const button = event.target;
+                button.disabled = true;
+                button.textContent = '🔄 Populating...';
+                
+                const response = await fetch('/populate-supplement-biomarkers', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(result.message || 'Successfully populated expected biomarkers!');
+                    // Reload the supplement table to show updated data
+                    await loadSupplementTable();
+                } else {
+                    alert('Error: ' + (result.error || result.detail || 'Failed to populate biomarkers'));
+                }
+                
+            } catch (error) {
+                console.error('Failed to populate supplement biomarkers:', error);
+                alert('Failed to populate biomarkers: ' + error.message);
+            } finally {
+                // Reset button
+                const button = document.querySelector('button[onclick="populateSupplementBiomarkers()"]');
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = '🤖 Auto-populate Expected Biomarkers';
+                }
             }
         }
         

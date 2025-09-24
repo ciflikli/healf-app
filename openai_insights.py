@@ -20,6 +20,75 @@ def serialize_for_json(obj):
         return [serialize_for_json(item) for item in obj]
     return obj
 
+async def generate_supplement_biomarkers(supplement_name: str, dosage: str = "") -> str:
+    """
+    Generate expected biomarkers that should be affected by a supplement using LLM
+    """
+    if not openai_client:
+        return generate_fallback_supplement_biomarkers(supplement_name, dosage)
+    
+    try:
+        prompt = f"""
+        You are a nutrition and supplement expert. Given a supplement name and dosage, determine which specific biomarkers or health metrics should typically be affected or improved by this supplement.
+
+        Supplement: {supplement_name}
+        Dosage: {dosage}
+
+        Please provide a concise, comma-separated list of the PRIMARY biomarkers that this supplement is most likely to affect based on scientific evidence. Focus on measurable laboratory values and health metrics.
+
+        Examples:
+        - Vitamin D: "Vitamin D, Calcium, PTH"
+        - Red Yeast Rice: "Total Cholesterol, LDL, HDL"
+        - Fiber: "LDL, Total Cholesterol, Blood Glucose"
+        - Folate: "Folate, Homocysteine, B12"
+
+        Provide ONLY the biomarker names as a comma-separated list, no explanations:
+        """
+        
+        response = openai_client.chat.completions.create(
+            model="gpt-5",
+            messages=[
+                {"role": "system", "content": "You are a nutrition expert providing evidence-based supplement-biomarker relationships. Respond only with biomarker names as a comma-separated list."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=100,
+            temperature=0.3
+        )
+        
+        return response.choices[0].message.content.strip()
+    
+    except Exception as e:
+        print(f"LLM call failed for {supplement_name}: {str(e)}")
+        return generate_fallback_supplement_biomarkers(supplement_name, dosage)
+
+def generate_fallback_supplement_biomarkers(supplement_name: str, dosage: str) -> str:
+    """
+    Fallback function for when LLM is unavailable
+    """
+    # Basic knowledge-based mapping
+    supplement_lower = supplement_name.lower()
+    
+    if 'vitamin d' in supplement_lower:
+        return "Vitamin D, Calcium, PTH"
+    elif 'red yeast rice' in supplement_lower:
+        return "Total Cholesterol, LDL, HDL"  
+    elif 'fiber' in supplement_lower:
+        return "LDL, Total Cholesterol, Blood Glucose"
+    elif 'folate' in supplement_lower:
+        return "Folate, Homocysteine"
+    elif 'chromium' in supplement_lower:
+        return "Blood Glucose, HbA1c, Insulin"
+    elif 'coq10' in supplement_lower:
+        return "CoQ10, Creatinine Kinase, Blood Pressure"
+    elif 'nmn' in supplement_lower:
+        return "NAD+, Blood Glucose, Cholesterol"
+    elif 'resveratrol' in supplement_lower:
+        return "Inflammation Markers, HDL, Blood Glucose"
+    elif 'saffron' in supplement_lower:
+        return "Mood Markers, Cortisol, Blood Glucose"
+    else:
+        return "Various markers"
+
 def generate_health_insights(biomarker_data: List[Dict], 
                            supplement_effects: Dict,
                            weekly_changes: Dict) -> Dict:
