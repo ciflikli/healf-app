@@ -276,11 +276,6 @@
                 
                 // Keep existing supplement selector population for other uses
                 // (RDD now uses intervention dates populated separately)
-                    const option = document.createElement('option');
-                    option.value = supplement.name;
-                    option.textContent = `${supplement.name} (${supplement.start_date})`;
-                    selector.appendChild(option);
-                });
                 
             } catch (error) {
                 console.error('Failed to load supplements:', error);
