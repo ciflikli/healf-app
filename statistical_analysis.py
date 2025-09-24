@@ -30,10 +30,10 @@ class RegressionDiscontinuityAnalyzer:
         df = pl.read_database(query, connection=conn)
         conn.close()
         
-        # Convert date column to datetime
+        # Convert date column to datetime with robust parsing
         df = df.with_columns([
-            pl.col("measurement_date").str.to_date().alias("date")
-        ])
+            pl.col("measurement_date").str.to_date(strict=False).alias("date")
+        ]).filter(pl.col("date").is_not_null())  # Remove rows with invalid dates
         
         return df
     
@@ -52,8 +52,8 @@ class RegressionDiscontinuityAnalyzer:
         
         if len(df) > 0:
             df = df.with_columns([
-                pl.col("start_date").str.to_date().alias("start_date")
-            ])
+                pl.col("start_date").str.to_date(strict=False).alias("start_date")
+            ]).filter(pl.col("start_date").is_not_null())
         
         return df
     
@@ -147,17 +147,17 @@ class RegressionDiscontinuityAnalyzer:
             
             return {
                 "metric": metric_name,
-                "intercept": intercept,
-                "pre_slope": pre_slope, 
-                "treatment_effect": treatment_effect,  # Corrected: actual jump at cutoff
-                "slope_change": slope_change,          # Corrected: change in trend
-                "treatment_p_value": p_values[2] if len(p_values) > 2 else None,
-                "treatment_std_error": std_errors[2] if len(std_errors) > 2 else None,
-                "r_squared": r_squared,
+                "intercept": float(intercept),
+                "pre_slope": float(pre_slope), 
+                "treatment_effect": float(treatment_effect),  # Corrected: actual jump at cutoff
+                "slope_change": float(slope_change),          # Corrected: change in trend
+                "treatment_p_value": float(p_values[2]) if len(p_values) > 2 and p_values[2] is not None else None,
+                "treatment_std_error": float(std_errors[2]) if len(std_errors) > 2 and std_errors[2] is not None else None,
+                "r_squared": float(r_squared),
                 "n_observations": len(analysis_data),
                 "bandwidth_days": bandwidth,
                 "supplement_start": supplement_start_date,
-                "statistically_significant": p_values[2] < 0.05 if len(p_values) > 2 and p_values[2] is not None else False
+                "statistically_significant": bool(p_values[2] < 0.05) if len(p_values) > 2 and p_values[2] is not None else False
             }
             
         except Exception as e:

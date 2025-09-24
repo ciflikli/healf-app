@@ -3,7 +3,7 @@ modules = ["python-3.11"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["libiconv", "libxcrypt", "pkg-config", "xsimd"]
+packages = ["arrow-cpp", "libiconv", "libxcrypt", "pkg-config", "xsimd"]
 
 [unitTest]
 language = "python3"
@@ -48,5 +48,5 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 42297
+localPort = 41997
 externalPort = 3000
