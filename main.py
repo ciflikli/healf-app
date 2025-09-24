@@ -383,25 +383,23 @@ async def decompose_metric(metric_name: str, freq: str = "D", horizon: int = 30)
         raise HTTPException(status_code=500, detail=f"Time series decomposition failed: {str(e)}")
 
 
-@app.get("/rdd/plot/{metric_name}/{supplement_name}")
-async def get_rdd_plot_data(metric_name: str, supplement_name: str, bandwidth: int = 30):
-    """Get RDD analysis with plot series data for before/after slopes"""
+@app.get("/rdd/plot/{metric_name}/{intervention_date}")
+async def get_rdd_plot_data(metric_name: str, intervention_date: str, bandwidth: int = 30):
+    """Get RDD analysis with plot series data for before/after slopes using intervention date"""
     try:
-        # Get supplement start date
-        supplements = await get_supplements()
-        supplement_info = next((s for s in supplements if s['name'].lower() == supplement_name.lower()), None)
+        # Validate intervention date format
+        from datetime import datetime
+        try:
+            datetime.strptime(intervention_date, '%Y-%m-%d')
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid date format. Expected YYYY-MM-DD, got: {intervention_date}")
         
-        if not supplement_info:
-            raise HTTPException(status_code=404, detail=f"Supplement '{supplement_name}' not found")
-        
-        start_date = supplement_info['start_date']
-        
-        # Perform RDD analysis
+        # Perform RDD analysis using the intervention date directly
         analyzer = RegressionDiscontinuityAnalyzer()
-        effect_analysis = analyzer.estimate_rdd_effect(metric_name, start_date, bandwidth=bandwidth)
+        effect_analysis = analyzer.estimate_rdd_effect(metric_name, intervention_date, bandwidth=bandwidth)
         
         # Get the RDD data for plotting
-        rdd_data = analyzer.prepare_rdd_data(metric_name, start_date)
+        rdd_data = analyzer.prepare_rdd_data(metric_name, intervention_date)
         
         # Build plot series with before/after slopes
         plot_data = build_rdd_plot_series(effect_analysis, rdd_data)
@@ -409,9 +407,9 @@ async def get_rdd_plot_data(metric_name: str, supplement_name: str, bandwidth: i
         return {
             "effect_analysis": effect_analysis,
             "plot_data": plot_data,
-            "supplement": supplement_name,
+            "intervention_date": intervention_date,
             "metric": metric_name,
-            "start_date": start_date,
+            "start_date": intervention_date,  # Keep for backwards compatibility
             "bandwidth_days": bandwidth
         }
     

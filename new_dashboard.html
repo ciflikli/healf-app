@@ -134,9 +134,9 @@
                 <select id="rddMetricSelect">
                     <option value="">Select a metric...</option>
                 </select>
-                <label>Supplement:</label>
-                <select id="rddSupplementSelect">
-                    <option value="">Select supplement...</option>
+                <label>Intervention:</label>
+                <select id="rddInterventionSelect">
+                    <option value="">Select intervention date...</option>
                 </select>
                 <button onclick="analyzeRDDWithPlots()" class="btn">Analyze with Plots</button>
             </div>
@@ -200,6 +200,9 @@
                 
                 // Load supplements for dropdown
                 await loadSupplementsList();
+                
+                // Load intervention dates for RDD dropdown
+                await loadInterventionDates();
                 
                 // Load biomarkers for delta predictions
                 await loadBiomarkersList();
@@ -271,11 +274,8 @@
                 const response = await fetch('/supplements');
                 supplementsList = await response.json();
                 
-                // Populate supplement selector for RDD
-                const selector = document.getElementById('rddSupplementSelect');
-                selector.innerHTML = '<option value="">Select supplement...</option>';
-                
-                supplementsList.forEach(supplement => {
+                // Keep existing supplement selector population for other uses
+                // (RDD now uses intervention dates populated separately)
                     const option = document.createElement('option');
                     option.value = supplement.name;
                     option.textContent = `${supplement.name} (${supplement.start_date})`;
@@ -284,6 +284,30 @@
                 
             } catch (error) {
                 console.error('Failed to load supplements:', error);
+            }
+        }
+        
+        async function loadInterventionDates() {
+            try {
+                const response = await fetch('/supplements');
+                const supplements = await response.json();
+                
+                // Get distinct start dates from supplements
+                const uniqueDates = [...new Set(supplements.map(s => s.start_date))].sort();
+                
+                // Populate intervention selector for RDD
+                const selector = document.getElementById('rddInterventionSelect');
+                selector.innerHTML = '<option value="">Select intervention date...</option>';
+                
+                uniqueDates.forEach(date => {
+                    const option = document.createElement('option');
+                    option.value = date;
+                    option.textContent = date;
+                    selector.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Failed to load intervention dates:', error);
             }
         }
         
@@ -433,15 +457,15 @@
         
         async function analyzeRDDWithPlots() {
             const metric = document.getElementById('rddMetricSelect').value;
-            const supplement = document.getElementById('rddSupplementSelect').value;
+            const interventionDate = document.getElementById('rddInterventionSelect').value;
             
-            if (!metric || !supplement) {
-                alert('Please select both a metric and a supplement');
+            if (!metric || !interventionDate) {
+                alert('Please select both a metric and an intervention date');
                 return;
             }
             
             try {
-                const response = await fetch(`/rdd/plot/${encodeURIComponent(metric)}/${encodeURIComponent(supplement)}`);
+                const response = await fetch(`/rdd/plot/${encodeURIComponent(metric)}/${encodeURIComponent(interventionDate)}`);
                 const result = await response.json();
                 
                 if (result.error) {
@@ -602,15 +626,13 @@
         function createTimeSeriesPlot(data) {
             const traces = [];
             
-            // Original time series
+            // Original time series - use bar plot for better weekly data visualization
             traces.push({
                 x: data.original.dates,
                 y: data.original.values,
-                mode: 'lines+markers',
-                type: 'scatter',
+                type: 'bar',
                 name: 'Original Data',
-                line: { color: 'blue' },
-                marker: { size: 4 }
+                marker: { color: 'blue' }
             });
             
             // Forecast if available

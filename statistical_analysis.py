@@ -417,17 +417,31 @@ def decompose_metric_arima(metric_name: str, freq: str = 'D', horizon: int = 30)
         # Create proper time series index
         import pandas as pd
         ts = pd.Series(values.values, index=pd.to_datetime(dates.values))
-        ts = ts.asfreq(freq)  # Set frequency
         
-        # Helper function to clean values for JSON serialization
-        def clean_json_values(values):
-            return [float(v) if not (np.isnan(v) or np.isinf(v)) else 0.0 for v in values]
+        # Detect natural frequency of data and avoid filling gaps with zeros
+        date_diffs = ts.index.to_series().diff().dropna()
+        median_diff = date_diffs.median()
+        
+        # Determine if data is naturally weekly (don't force daily frequency)
+        if median_diff >= pd.Timedelta(days=6):  # Weekly or more
+            # Keep original sparse data - don't use asfreq() which fills with NaN/0
+            print(f"Detected weekly data, keeping {len(ts)} original points")
+        else:
+            # Only set frequency for truly daily data
+            ts = ts.asfreq(freq)
+        
+        # Filter out NaN/infinite values while keeping dates and values synchronized
+        valid_mask = ~(np.isnan(ts.values) | np.isinf(ts.values))
+        valid_dates = ts.index[valid_mask]
+        valid_values = ts.values[valid_mask]
+        
+        print(f"Filtered time series: {len(ts)} -> {len(valid_values)} points (removed {len(ts) - len(valid_values)} NaN/inf)")
         
         result = {
             "metric": metric_name,
             "original": {
-                "dates": [d.strftime('%Y-%m-%d') for d in ts.index],
-                "values": clean_json_values(ts.values)
+                "dates": [d.strftime('%Y-%m-%d') for d in valid_dates],
+                "values": [float(v) for v in valid_values]
             }
         }
         
