@@ -24,6 +24,7 @@ class RegressionDiscontinuityAnalyzer:
         query = """
         SELECT metric_name, value, measurement_date, source
         FROM health_metrics 
+        WHERE measurement_date BETWEEN '2024-11-05' AND '2025-09-16'
         ORDER BY measurement_date
         """
         
