@@ -113,11 +113,10 @@
                             <th>Start Date</th>
                             <th>Dosage</th>
                             <th>Expected Biomarkers</th>
-                            <th>Notes</th>
                         </tr>
                     </thead>
                     <tbody id="supplementTableBody">
-                        <tr><td colspan="5">Loading supplement data...</td></tr>
+                        <tr><td colspan="4">Loading supplement data...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -376,7 +375,7 @@
                 const tableBody = document.getElementById('supplementTableBody');
                 
                 if (supplements.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #666;">No supplement data available</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666;">No supplement data available</td></tr>';
                     return;
                 }
                 
@@ -386,7 +385,6 @@
                         <td>${new Date(supplement.start_date).toLocaleDateString()}</td>
                         <td>${supplement.dosage || 'Not specified'}</td>
                         <td>${supplement.expected_biomarkers || 'None specified'}</td>
-                        <td>${supplement.notes || 'No notes'}</td>
                     </tr>
                 `).join('');
                 
