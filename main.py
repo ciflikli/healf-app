@@ -448,8 +448,69 @@ async def dashboard():
                     if (metrics.length > 0) {
                         updateSupplementChart(metrics);
                     }
+                    
+                    // Load weekly changes for key metrics
+                    await updateWeeklyChange();
+                    
+                    // Load next test predictions
+                    await updateNextPrediction();
+                    
                 } catch (error) {
                     console.error('Failed to load dashboard data:', error);
+                }
+            }
+            
+            async function updateWeeklyChange() {
+                try {
+                    // Get weekly analysis for stress level (most important metric)
+                    const response = await fetch('/weekly-analysis/stress_level');
+                    const data = await response.json();
+                    
+                    if (data.latest_change && data.latest_change.weekly_pct_change !== null) {
+                        const change = data.latest_change.weekly_pct_change * 100;
+                        const changeText = change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`;
+                        const changeColor = change < 0 ? '#28a745' : '#dc3545';  // Green for reduction in stress
+                        
+                        document.getElementById('weeklyChange').innerHTML = 
+                            `<span style="color: ${changeColor}">${changeText}</span>`;
+                    } else {
+                        document.getElementById('weeklyChange').textContent = 'No data';
+                    }
+                } catch (error) {
+                    document.getElementById('weeklyChange').textContent = 'Error';
+                    console.error('Failed to load weekly change:', error);
+                }
+            }
+            
+            async function updateNextPrediction() {
+                try {
+                    // Get biomarkers for prediction
+                    const biomarkerResponse = await fetch('/biomarkers');
+                    const biomarkers = await biomarkerResponse.json();
+                    
+                    if (biomarkers.length > 0) {
+                        // Show next test date (30 days from latest biomarker test)
+                        const latestTest = biomarkers.reduce((latest, current) => {
+                            return new Date(current.test_date) > new Date(latest.test_date) ? current : latest;
+                        });
+                        
+                        const nextTestDate = new Date(latestTest.test_date);
+                        nextTestDate.setDate(nextTestDate.getDate() + 30);  // 30 days from last test
+                        
+                        const today = new Date();
+                        const daysUntil = Math.ceil((nextTestDate - today) / (1000 * 60 * 60 * 24));
+                        
+                        if (daysUntil > 0) {
+                            document.getElementById('nextPrediction').innerHTML = `${daysUntil} days`;
+                        } else {
+                            document.getElementById('nextPrediction').innerHTML = '<span style="color: #dc3545;">Due now</span>';
+                        }
+                    } else {
+                        document.getElementById('nextPrediction').textContent = 'No tests';
+                    }
+                } catch (error) {
+                    document.getElementById('nextPrediction').textContent = 'Error';
+                    console.error('Failed to load next prediction:', error);
                 }
             }
             
