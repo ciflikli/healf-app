@@ -351,6 +351,258 @@ def generate_fallback_predictions(current_biomarkers: List[Dict],
         }
 
 
+def generate_biomarker_delta_predictions(biomarker_name: str, 
+                                       current_biomarkers: List[Dict],
+                                       supplement_timeline: List[Dict], 
+                                       months_ahead: int = 6) -> Dict:
+    """
+    Generate AI-powered directional biomarker delta predictions considering 
+    whether improvements mean values should go up or down
+    """
+    
+    # Define desired directions for common biomarkers (True = higher is better)
+    biomarker_directions = {
+        # Lipid panel - lower is generally better
+        'ldl cholesterol': False,
+        'ldl': False,
+        'total cholesterol': False,
+        'triglycerides': False,
+        'non-hdl cholesterol': False,
+        
+        # HDL - higher is better
+        'hdl cholesterol': True,
+        'hdl': True,
+        
+        # Inflammation markers - lower is better
+        'c-reactive protein': False,
+        'crp': False,
+        'hs-crp': False,
+        'esr': False,
+        'interleukin': False,
+        
+        # Diabetes markers - lower is better
+        'glucose': False,
+        'hba1c': False,
+        'insulin': False,
+        
+        # Vitamins and minerals - higher is better
+        'vitamin d': True,
+        'vitamin b12': True,
+        'folate': True,
+        'iron': True,
+        'ferritin': True,
+        'magnesium': True,
+        'zinc': True,
+        
+        # Hormones - context dependent, default to stable
+        'testosterone': True,
+        'estrogen': True,
+        'cortisol': False,  # Lower morning cortisol often better
+        
+        # Liver function - lower is generally better
+        'alt': False,
+        'ast': False,
+        'alp': False,
+        'bilirubin': False,
+        
+        # Kidney function - lower is better
+        'creatinine': False,
+        'bun': False,
+        'urea': False
+    }
+    
+    # Find current biomarker value
+    current_value = None
+    current_biomarker = None
+    
+    for biomarker in current_biomarkers:
+        if biomarker['name'].lower() == biomarker_name.lower():
+            current_value = biomarker['value']
+            current_biomarker = biomarker
+            break
+    
+    if current_value is None:
+        return {"error": f"Biomarker '{biomarker_name}' not found in current data"}
+    
+    # Determine if higher values are better for this biomarker
+    biomarker_key = biomarker_name.lower().strip()
+    is_higher_better = biomarker_directions.get(biomarker_key, None)
+    
+    # Find relevant supplements that could affect this biomarker
+    relevant_supplements = []
+    if supplement_timeline:
+        for supplement in supplement_timeline:
+            # Simple heuristic to match supplements to biomarkers
+            supplement_name = supplement.get('name', '').lower()
+            expected_biomarkers = supplement.get('expected_biomarkers', '').lower()
+            
+            if (biomarker_key in supplement_name or 
+                biomarker_key in expected_biomarkers or
+                any(keyword in supplement_name for keyword in ['omega', 'vitamin', 'multi', 'fish oil', 'magnesium'])):
+                relevant_supplements.append(supplement)
+    
+    try:
+        if not openai_client:
+            return generate_fallback_biomarker_delta(biomarker_name, current_value, 
+                                                   is_higher_better, relevant_supplements, months_ahead)
+        
+        # Create context for OpenAI
+        supplement_context = "No relevant supplements" if not relevant_supplements else "\n".join([
+            f"- {s.get('name', 'Unknown')}: Started {s.get('start_date', 'Unknown')}, "
+            f"Dosage: {s.get('dosage', 'Not specified')}"
+            for s in relevant_supplements[:3]  # Limit to top 3 most relevant
+        ])
+        
+        direction_context = "unknown"
+        if is_higher_better is True:
+            direction_context = "higher values indicate improvement"
+        elif is_higher_better is False:
+            direction_context = "lower values indicate improvement"
+        else:
+            direction_context = "optimal range varies by individual"
+        
+        prompt = f"""
+        Predict the delta change for biomarker '{biomarker_name}' over the next {months_ahead} months.
+        
+        Current Information:
+        - Current {biomarker_name}: {current_value} {current_biomarker.get('unit', '')}
+        - For this biomarker: {direction_context}
+        - Reference range: {current_biomarker.get('reference_range_min', 'N/A')} - {current_biomarker.get('reference_range_max', 'N/A')}
+        
+        Relevant Supplements:
+        {supplement_context}
+        
+        Please provide a JSON response with:
+        {{
+            "biomarker": "{biomarker_name}",
+            "predicted_delta": number (positive/negative change),
+            "predicted_value": number (current + delta),
+            "is_improvement": boolean (true if delta represents improvement),
+            "confidence": number (0-1),
+            "reasoning": "explanation of prediction",
+            "recommendation": "specific action recommendation",
+            "timeframe": "when to expect this change"
+        }}
+        
+        Consider:
+        - Direction of improvement for this biomarker
+        - Expected supplement effects
+        - Realistic physiological changes over {months_ahead} months
+        - Individual variation and reference ranges
+        """
+        
+        response = openai_client.chat.completions.create(
+            model="gpt-5",
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"}
+        )
+        
+        result = json.loads(response.choices[0].message.content)
+        
+        # Add metadata
+        result["analysis_method"] = "OpenAI GPT-5 Analysis"
+        result["current_value"] = current_value
+        result["direction_context"] = direction_context
+        
+        return result
+        
+    except Exception as e:
+        error_msg = str(e)
+        if "insufficient_quota" in error_msg or "quota" in error_msg:
+            return generate_fallback_biomarker_delta(biomarker_name, current_value, 
+                                                   is_higher_better, relevant_supplements, months_ahead)
+        return {"error": f"Failed to generate biomarker delta prediction: {error_msg}"}
+
+
+def generate_fallback_biomarker_delta(biomarker_name: str, current_value: float,
+                                     is_higher_better: bool, relevant_supplements: List[Dict],
+                                     months_ahead: int) -> Dict:
+    """
+    Generate statistical fallback for biomarker delta predictions
+    """
+    try:
+        # Simple heuristic predictions based on biomarker type and supplements
+        predicted_delta = 0
+        confidence = 0.5
+        reasoning = "Statistical trend analysis"
+        
+        # Base prediction on supplement presence and biomarker type
+        supplement_effect = 0
+        if relevant_supplements:
+            supplement_effect = len(relevant_supplements) * 0.1  # Each supplement adds 10% effect
+            confidence += 0.1
+        
+        # Apply biomarker-specific logic
+        biomarker_lower = biomarker_name.lower()
+        
+        if 'vitamin d' in biomarker_lower:
+            predicted_delta = 5 + supplement_effect * 10  # Vitamin D typically increases 5-15 ng/mL
+            reasoning = "Vitamin D supplementation typically shows 5-15 ng/mL increase"
+            
+        elif 'cholesterol' in biomarker_lower and 'ldl' in biomarker_lower:
+            predicted_delta = -0.2 - supplement_effect * 0.3  # LDL typically decreases
+            reasoning = "LDL cholesterol often improves with dietary supplements"
+            
+        elif 'hdl' in biomarker_lower:
+            predicted_delta = 0.1 + supplement_effect * 0.2  # HDL typically increases
+            reasoning = "HDL cholesterol may improve modestly with supplements"
+            
+        elif any(term in biomarker_lower for term in ['crp', 'inflammation']):
+            predicted_delta = -0.5 - supplement_effect * 0.2  # Inflammation markers decrease
+            reasoning = "Anti-inflammatory effects from supplements"
+            
+        else:
+            # General prediction based on direction
+            if is_higher_better:
+                predicted_delta = current_value * (0.02 + supplement_effect * 0.03)  # 2-5% increase
+                reasoning = "General positive trend with supplementation"
+            elif is_higher_better is False:
+                predicted_delta = -current_value * (0.02 + supplement_effect * 0.03)  # 2-5% decrease
+                reasoning = "Expected improvement (lower values)"
+            else:
+                predicted_delta = current_value * 0.01  # 1% change
+                reasoning = "Minimal change expected"
+        
+        predicted_value = current_value + predicted_delta
+        
+        # Determine if it's an improvement
+        is_improvement = False
+        if is_higher_better is True and predicted_delta > 0:
+            is_improvement = True
+        elif is_higher_better is False and predicted_delta < 0:
+            is_improvement = True
+        elif abs(predicted_delta) < current_value * 0.05:  # Less than 5% change
+            is_improvement = True  # Stability can be good
+        
+        return {
+            "biomarker": biomarker_name,
+            "predicted_delta": round(predicted_delta, 2),
+            "predicted_value": round(predicted_value, 2),
+            "current_value": current_value,
+            "is_improvement": is_improvement,
+            "confidence": min(confidence, 0.8),  # Cap at 80% for statistical methods
+            "reasoning": reasoning,
+            "recommendation": f"Continue monitoring {biomarker_name} trends with current supplement regimen",
+            "timeframe": f"Expected changes over {months_ahead} months",
+            "analysis_method": "Statistical Fallback Analysis",
+            "direction_context": "higher values indicate improvement" if is_higher_better else "lower values indicate improvement" if is_higher_better is False else "optimal range varies"
+        }
+        
+    except Exception as e:
+        return {
+            "biomarker": biomarker_name,
+            "predicted_delta": 0,
+            "predicted_value": current_value,
+            "current_value": current_value,
+            "is_improvement": False,
+            "confidence": 0.3,
+            "reasoning": f"Analysis error: {str(e)}",
+            "recommendation": "Continue health monitoring",
+            "timeframe": f"{months_ahead} months",
+            "analysis_method": "Error fallback"
+        }
+
+
 def analyze_biomarker_correlations(biomarker_data: List[Dict],
                                  health_metrics: List[Dict]) -> Dict:
     """

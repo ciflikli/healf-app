@@ -7,8 +7,8 @@ import json
 import os
 from datetime import datetime
 from typing import List, Dict, Any
-from statistical_analysis import RegressionDiscontinuityAnalyzer, analyze_supplement_effectiveness
-from openai_insights import generate_health_insights, predict_biomarker_changes, analyze_biomarker_correlations
+from statistical_analysis import RegressionDiscontinuityAnalyzer, analyze_supplement_effectiveness, build_rdd_plot_series, decompose_metric_arima
+from openai_insights import generate_health_insights, predict_biomarker_changes, analyze_biomarker_correlations, generate_biomarker_delta_predictions
 
 app = FastAPI(title="Health Data Analytics", version="1.0.0")
 
@@ -66,7 +66,8 @@ async def startup_event():
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
-    return """
+    with open('new_dashboard.html', 'r') as f:
+        return f.read()
     <!DOCTYPE html>
     <html>
     <head>
@@ -801,6 +802,129 @@ async def get_weekly_analysis(metric_name: str):
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Weekly analysis failed: {str(e)}")
+
+
+@app.get("/biomarkers/dates")
+async def get_biomarker_dates():
+    """Get discrete test dates per biomarker for date selector"""
+    try:
+        conn = sqlite3.connect('health_data.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT name, test_date, COUNT(*) as test_count
+            FROM biomarkers 
+            GROUP BY name, test_date
+            ORDER BY name, test_date DESC
+        ''')
+        rows = cursor.fetchall()
+        
+        # Group by biomarker name
+        biomarker_dates = {}
+        for name, test_date, count in rows:
+            if name not in biomarker_dates:
+                biomarker_dates[name] = []
+            biomarker_dates[name].append({
+                "date": test_date,
+                "test_count": count
+            })
+        
+        conn.close()
+        return biomarker_dates
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch biomarker dates: {str(e)}")
+
+
+@app.get("/metrics/decompose/{metric_name}")
+async def decompose_metric(metric_name: str, freq: str = "D", horizon: int = 30):
+    """Get ARIMA time series decomposition and forecast for a health metric"""
+    try:
+        result = decompose_metric_arima(metric_name, freq, horizon)
+        return result
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Time series decomposition failed: {str(e)}")
+
+
+@app.get("/rdd/plot/{metric_name}/{supplement_name}")
+async def get_rdd_plot_data(metric_name: str, supplement_name: str, bandwidth: int = 30):
+    """Get RDD analysis with plot series data for before/after slopes"""
+    try:
+        # Get supplement start date
+        supplements = await get_supplements()
+        supplement_info = next((s for s in supplements if s['name'].lower() == supplement_name.lower()), None)
+        
+        if not supplement_info:
+            raise HTTPException(status_code=404, detail=f"Supplement '{supplement_name}' not found")
+        
+        start_date = supplement_info['start_date']
+        
+        # Perform RDD analysis
+        analyzer = RegressionDiscontinuityAnalyzer()
+        effect_analysis = analyzer.estimate_rdd_effect(metric_name, start_date, bandwidth_days=bandwidth)
+        
+        # Get the RDD data for plotting
+        rdd_data = analyzer.prepare_rdd_data(metric_name, start_date)
+        
+        # Build plot series with before/after slopes
+        plot_data = build_rdd_plot_series(effect_analysis, rdd_data)
+        
+        return {
+            "effect_analysis": effect_analysis,
+            "plot_data": plot_data,
+            "supplement": supplement_name,
+            "metric": metric_name,
+            "start_date": start_date,
+            "bandwidth_days": bandwidth
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"RDD plot analysis failed: {str(e)}")
+
+
+@app.get("/ai/biomarker-delta/{biomarker_name}")
+async def get_biomarker_delta_prediction(biomarker_name: str, months_ahead: int = 6):
+    """Get AI-powered biomarker delta prediction with directional improvement logic"""
+    try:
+        # Get current biomarkers and supplements
+        biomarkers = await get_biomarkers()
+        supplements = await get_supplements()
+        
+        # Generate delta prediction
+        prediction = generate_biomarker_delta_predictions(
+            biomarker_name, biomarkers, supplements, months_ahead
+        )
+        
+        return prediction
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Biomarker delta prediction failed: {str(e)}")
+
+
+@app.get("/health-metrics/unique")
+async def get_unique_health_metrics():
+    """Get list of unique health metric names for dropdowns"""
+    try:
+        conn = sqlite3.connect('health_data.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT DISTINCT metric_name, COUNT(*) as data_points
+            FROM health_metrics 
+            GROUP BY metric_name
+            ORDER BY data_points DESC, metric_name
+        ''')
+        rows = cursor.fetchall()
+        
+        metrics = [{"name": name, "data_points": count} for name, count in rows]
+        
+        conn.close()
+        return metrics
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch unique health metrics: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn

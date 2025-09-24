@@ -24,7 +24,6 @@ class RegressionDiscontinuityAnalyzer:
         query = """
         SELECT metric_name, value, measurement_date, source
         FROM health_metrics 
-        WHERE measurement_date BETWEEN '2024-11-05' AND '2025-09-16'
         ORDER BY measurement_date
         """
         
@@ -311,3 +310,181 @@ def analyze_supplement_effectiveness(supplement_name: str,
         results["overall_effectiveness"] = significant_effects / total_effects
     
     return results
+
+
+def build_rdd_plot_series(effect_data: Dict, rdd_data: pl.DataFrame) -> Dict:
+    """
+    Build plot series data for RDD visualization with before/after slopes
+    """
+    try:
+        if 'treatment_effect' not in effect_data or len(rdd_data) == 0:
+            return {"error": "Insufficient data for plot series"}
+        
+        # Get the data points
+        x_values = rdd_data.select('running_var').to_numpy().flatten()
+        y_values = rdd_data.select('value').to_numpy().flatten()
+        treatment = rdd_data.select('treatment').to_numpy().flatten()
+        
+        # Split into before and after treatment
+        before_mask = treatment == 0
+        after_mask = treatment == 1
+        
+        x_before = x_values[before_mask] 
+        y_before = y_values[before_mask]
+        x_after = x_values[after_mask]
+        y_after = y_values[after_mask]
+        
+        plot_data = {
+            "scatter": {
+                "x_all": x_values.tolist(),
+                "y_all": y_values.tolist(),
+                "treatment": treatment.tolist()
+            },
+            "cutoff": 0,
+            "treatment_effect": effect_data.get('treatment_effect', 0)
+        }
+        
+        # Fit regression lines for before and after
+        if len(x_before) >= 3:
+            # Before treatment line
+            X_before = sm.add_constant(x_before)
+            model_before = sm.OLS(y_before, X_before).fit()
+            x_line_before = np.linspace(min(x_before), 0, 50)
+            y_line_before = model_before.predict(sm.add_constant(x_line_before))
+            
+            plot_data["before_line"] = {
+                "x": x_line_before.tolist(),
+                "y": y_line_before.tolist()
+            }
+        
+        if len(x_after) >= 3:
+            # After treatment line  
+            X_after = sm.add_constant(x_after)
+            model_after = sm.OLS(y_after, X_after).fit()
+            x_line_after = np.linspace(0, max(x_after), 50)
+            y_line_after = model_after.predict(sm.add_constant(x_line_after))
+            
+            plot_data["after_line"] = {
+                "x": x_line_after.tolist(),
+                "y": y_line_after.tolist()
+            }
+        
+        return plot_data
+        
+    except Exception as e:
+        return {"error": f"Failed to build plot series: {str(e)}"}
+
+
+def decompose_metric_arima(metric_name: str, freq: str = 'D', horizon: int = 30) -> Dict:
+    """
+    Decompose time series using ARIMA and generate forecast
+    """
+    try:
+        from statsmodels.tsa.seasonal import seasonal_decompose
+        from statsmodels.tsa.arima.model import ARIMA
+        from statsmodels.tsa.statespace.tools import diff
+        import warnings
+        warnings.filterwarnings('ignore')
+        
+        # Load health data
+        analyzer = RegressionDiscontinuityAnalyzer()
+        health_data = analyzer.get_health_data()
+        
+        # Filter for specific metric
+        metric_data = health_data.filter(pl.col("metric_name") == metric_name)
+        
+        if len(metric_data) < 14:  # Need at least 2 weeks of data
+            return {"error": f"Insufficient data for {metric_name} (need at least 14 points)"}
+        
+        # Sort by date and create time series
+        ts_data = metric_data.sort("date").with_columns([
+            pl.col("date").cast(pl.Date),
+            pl.col("value").cast(pl.Float64)
+        ])
+        
+        # Handle duplicate dates by averaging
+        ts_data = ts_data.group_by("date").agg(pl.col("value").mean())
+        ts_data = ts_data.sort("date")
+        
+        dates = ts_data.select("date").to_pandas().squeeze()
+        values = ts_data.select("value").to_pandas().squeeze()
+        
+        # Create proper time series index
+        import pandas as pd
+        ts = pd.Series(values.values, index=pd.to_datetime(dates.values))
+        ts = ts.asfreq(freq)  # Set frequency
+        
+        result = {
+            "metric": metric_name,
+            "original": {
+                "dates": [d.strftime('%Y-%m-%d') for d in ts.index],
+                "values": ts.values.tolist()
+            }
+        }
+        
+        # Perform seasonal decomposition if we have enough data
+        if len(ts) >= 24:  # Need at least 24 observations for decomposition
+            try:
+                decomposition = seasonal_decompose(ts, model='additive', period=7)
+                
+                result["decomposition"] = {
+                    "trend": {
+                        "dates": [d.strftime('%Y-%m-%d') for d in decomposition.trend.index],
+                        "values": [v if not pd.isna(v) else None for v in decomposition.trend.values]
+                    },
+                    "seasonal": {
+                        "dates": [d.strftime('%Y-%m-%d') for d in decomposition.seasonal.index],
+                        "values": decomposition.seasonal.values.tolist()
+                    },
+                    "residual": {
+                        "dates": [d.strftime('%Y-%m-%d') for d in decomposition.resid.index],
+                        "values": [v if not pd.isna(v) else None for v in decomposition.resid.values]
+                    }
+                }
+            except Exception as e:
+                result["decomposition"] = {"error": f"Decomposition failed: {str(e)}"}
+        
+        # ARIMA forecast
+        try:
+            # Simple ARIMA(1,1,1) model as default
+            model = ARIMA(ts, order=(1,1,1))
+            fitted_model = model.fit()
+            
+            forecast = fitted_model.forecast(steps=horizon)
+            conf_int = fitted_model.get_forecast(steps=horizon).conf_int()
+            
+            # Generate future dates
+            future_dates = pd.date_range(start=ts.index[-1] + pd.Timedelta(days=1), 
+                                       periods=horizon, freq=freq)
+            
+            result["forecast"] = {
+                "dates": [d.strftime('%Y-%m-%d') for d in future_dates],
+                "predicted": forecast.tolist(),
+                "lower_ci": conf_int.iloc[:, 0].tolist(),
+                "upper_ci": conf_int.iloc[:, 1].tolist(),
+                "model_info": str(fitted_model.summary()).split('\n')[:10]  # First 10 lines only
+            }
+            
+        except Exception as e:
+            # Fallback to simple linear trend
+            from scipy.stats import linregress
+            
+            x = np.arange(len(ts))
+            slope, intercept, r_value, p_value, std_err = linregress(x, ts.values)
+            
+            future_x = np.arange(len(ts), len(ts) + horizon)
+            future_values = slope * future_x + intercept
+            future_dates = pd.date_range(start=ts.index[-1] + pd.Timedelta(days=1), 
+                                       periods=horizon, freq=freq)
+            
+            result["forecast"] = {
+                "dates": [d.strftime('%Y-%m-%d') for d in future_dates],
+                "predicted": future_values.tolist(),
+                "model_info": [f"Linear trend fallback: slope={slope:.3f}, R²={r_value**2:.3f}"],
+                "method": "linear_fallback"
+            }
+        
+        return result
+        
+    except Exception as e:
+        return {"error": f"Time series analysis failed for {metric_name}: {str(e)}"}
