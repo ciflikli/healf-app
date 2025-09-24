@@ -398,7 +398,7 @@ async def get_rdd_plot_data(metric_name: str, supplement_name: str, bandwidth: i
         
         # Perform RDD analysis
         analyzer = RegressionDiscontinuityAnalyzer()
-        effect_analysis = analyzer.estimate_rdd_effect(metric_name, start_date, bandwidth_days=bandwidth)
+        effect_analysis = analyzer.estimate_rdd_effect(metric_name, start_date, bandwidth=bandwidth)
         
         # Get the RDD data for plotting
         rdd_data = analyzer.prepare_rdd_data(metric_name, start_date)

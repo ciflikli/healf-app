@@ -321,13 +321,13 @@ def build_rdd_plot_series(effect_data: Dict, rdd_data: pl.DataFrame) -> Dict:
             return {"error": "Insufficient data for plot series"}
         
         # Get the data points
-        x_values = rdd_data.select('running_var').to_numpy().flatten()
+        x_values = rdd_data.select('days_from_supplement').to_numpy().flatten()
         y_values = rdd_data.select('value').to_numpy().flatten()
-        treatment = rdd_data.select('treatment').to_numpy().flatten()
+        treatment = rdd_data.select('post_supplement').to_numpy().flatten()
         
-        # Split into before and after treatment
-        before_mask = treatment == 0
-        after_mask = treatment == 1
+        # Split into before and after treatment (post_supplement is boolean)
+        before_mask = treatment == False  # Before supplement
+        after_mask = treatment == True    # After supplement
         
         x_before = x_values[before_mask] 
         y_before = y_values[before_mask]
