@@ -334,14 +334,18 @@ def build_rdd_plot_series(effect_data: Dict, rdd_data: pl.DataFrame) -> Dict:
         x_after = x_values[after_mask]
         y_after = y_values[after_mask]
         
+        # Helper function to clean values for JSON serialization
+        def clean_values_for_json(values):
+            return [float(v) if not (np.isnan(v) or np.isinf(v)) else 0.0 for v in values]
+        
         plot_data = {
             "scatter": {
-                "x_all": x_values.tolist(),
-                "y_all": y_values.tolist(),
+                "x_all": clean_values_for_json(x_values),
+                "y_all": clean_values_for_json(y_values),
                 "treatment": treatment.tolist()
             },
             "cutoff": 0,
-            "treatment_effect": effect_data.get('treatment_effect', 0)
+            "treatment_effect": float(effect_data.get('treatment_effect', 0)) if not np.isnan(float(effect_data.get('treatment_effect', 0))) else 0.0
         }
         
         # Fit regression lines for before and after
@@ -353,8 +357,8 @@ def build_rdd_plot_series(effect_data: Dict, rdd_data: pl.DataFrame) -> Dict:
             y_line_before = model_before.predict(sm.add_constant(x_line_before))
             
             plot_data["before_line"] = {
-                "x": x_line_before.tolist(),
-                "y": y_line_before.tolist()
+                "x": clean_values_for_json(x_line_before),
+                "y": clean_values_for_json(y_line_before)
             }
         
         if len(x_after) >= 3:
@@ -365,8 +369,8 @@ def build_rdd_plot_series(effect_data: Dict, rdd_data: pl.DataFrame) -> Dict:
             y_line_after = model_after.predict(sm.add_constant(x_line_after))
             
             plot_data["after_line"] = {
-                "x": x_line_after.tolist(),
-                "y": y_line_after.tolist()
+                "x": clean_values_for_json(x_line_after),
+                "y": clean_values_for_json(y_line_after)
             }
         
         return plot_data
@@ -384,6 +388,7 @@ def decompose_metric_arima(metric_name: str, freq: str = 'D', horizon: int = 30)
         from statsmodels.tsa.arima.model import ARIMA
         from statsmodels.tsa.statespace.tools import diff
         import warnings
+        import numpy as np
         warnings.filterwarnings('ignore')
         
         # Load health data
@@ -427,18 +432,22 @@ def decompose_metric_arima(metric_name: str, freq: str = 'D', horizon: int = 30)
             try:
                 decomposition = seasonal_decompose(ts, model='additive', period=7)
                 
+                # Helper function to clean values
+                def clean_values(values):
+                    return [float(v) if not (pd.isna(v) or np.isinf(v)) else None for v in values]
+                
                 result["decomposition"] = {
                     "trend": {
                         "dates": [d.strftime('%Y-%m-%d') for d in decomposition.trend.index],
-                        "values": [v if not pd.isna(v) else None for v in decomposition.trend.values]
+                        "values": clean_values(decomposition.trend.values)
                     },
                     "seasonal": {
                         "dates": [d.strftime('%Y-%m-%d') for d in decomposition.seasonal.index],
-                        "values": decomposition.seasonal.values.tolist()
+                        "values": clean_values(decomposition.seasonal.values)
                     },
                     "residual": {
                         "dates": [d.strftime('%Y-%m-%d') for d in decomposition.resid.index],
-                        "values": [v if not pd.isna(v) else None for v in decomposition.resid.values]
+                        "values": clean_values(decomposition.resid.values)
                     }
                 }
             except Exception as e:
@@ -457,11 +466,15 @@ def decompose_metric_arima(metric_name: str, freq: str = 'D', horizon: int = 30)
             future_dates = pd.date_range(start=ts.index[-1] + pd.Timedelta(days=1), 
                                        periods=horizon, freq=freq)
             
+            # Helper function to clean forecast values
+            def clean_forecast_values(values):
+                return [float(v) if not (pd.isna(v) or np.isinf(v)) else 0.0 for v in values]
+            
             result["forecast"] = {
                 "dates": [d.strftime('%Y-%m-%d') for d in future_dates],
-                "predicted": forecast.tolist(),
-                "lower_ci": conf_int.iloc[:, 0].tolist(),
-                "upper_ci": conf_int.iloc[:, 1].tolist(),
+                "predicted": clean_forecast_values(forecast),
+                "lower_ci": clean_forecast_values(conf_int.iloc[:, 0]),
+                "upper_ci": clean_forecast_values(conf_int.iloc[:, 1]),
                 "model_info": str(fitted_model.summary()).split('\n')[:10]  # First 10 lines only
             }
             
@@ -477,10 +490,14 @@ def decompose_metric_arima(metric_name: str, freq: str = 'D', horizon: int = 30)
             future_dates = pd.date_range(start=ts.index[-1] + pd.Timedelta(days=1), 
                                        periods=horizon, freq=freq)
             
+            # Clean the linear regression values too
+            def clean_linear_values(values):
+                return [float(v) if not (np.isnan(v) or np.isinf(v)) else 0.0 for v in values]
+            
             result["forecast"] = {
                 "dates": [d.strftime('%Y-%m-%d') for d in future_dates],
-                "predicted": future_values.tolist(),
-                "model_info": [f"Linear trend fallback: slope={slope:.3f}, R²={r_value**2:.3f}"],
+                "predicted": clean_linear_values(future_values),
+                "model_info": [f"Linear trend fallback: slope={slope:.3f if not np.isnan(slope) else 0:.3f}, R²={r_value**2 if not np.isnan(r_value) else 0:.3f}"],
                 "method": "linear_fallback"
             }
         
