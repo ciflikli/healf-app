@@ -134,18 +134,30 @@ class RegressionDiscontinuityAnalyzer:
             ss_tot = np.sum((actual - np.mean(actual)) ** 2)
             r_squared = 1 - (ss_res / ss_tot)
             
-            # Treatment effect is the coefficient on the treatment indicator (β₂)
-            treatment_effect = coeffs[1] if len(coeffs) > 1 else 0
+            # Correct coefficient mapping for X = [const, time, treatment, time_treatment]
+            # β₀ = intercept, β₁ = pre_slope, β₂ = treatment_effect (jump), β₃ = slope_change
+            intercept = coeffs[0] if len(coeffs) > 0 else 0
+            pre_slope = coeffs[1] if len(coeffs) > 1 else 0  
+            treatment_effect = coeffs[2] if len(coeffs) > 2 else 0  # Actual treatment jump
+            slope_change = coeffs[3] if len(coeffs) > 3 else 0     # Change in slope
+            
+            # Get p-values and standard errors for proper significance testing
+            p_values = model.pvalues.values if hasattr(model, 'pvalues') else [None] * len(coeffs)
+            std_errors = model.bse.values if hasattr(model, 'bse') else [None] * len(coeffs)
             
             return {
                 "metric": metric_name,
-                "treatment_effect": treatment_effect,
-                "pre_trend": coeffs[0] if len(coeffs) > 0 else 0,
-                "slope_change": coeffs[2] if len(coeffs) > 2 else 0,
+                "intercept": intercept,
+                "pre_slope": pre_slope, 
+                "treatment_effect": treatment_effect,  # Corrected: actual jump at cutoff
+                "slope_change": slope_change,          # Corrected: change in trend
+                "treatment_p_value": p_values[2] if len(p_values) > 2 else None,
+                "treatment_std_error": std_errors[2] if len(std_errors) > 2 else None,
                 "r_squared": r_squared,
                 "n_observations": len(analysis_data),
                 "bandwidth_days": bandwidth,
-                "supplement_start": supplement_start_date
+                "supplement_start": supplement_start_date,
+                "statistically_significant": p_values[2] < 0.05 if len(p_values) > 2 and p_values[2] is not None else False
             }
             
         except Exception as e:
@@ -268,7 +280,11 @@ def analyze_supplement_effectiveness(supplement_name: str,
     if len(supplement_info) == 0:
         return {"error": f"Supplement '{supplement_name}' not found"}
     
-    start_date = supplement_info.select("start_date").to_numpy()[0][0].strftime('%Y-%m-%d')
+    start_date_obj = supplement_info.select("start_date").to_numpy()[0][0]
+    if hasattr(start_date_obj, 'strftime'):
+        start_date = start_date_obj.strftime('%Y-%m-%d')
+    else:
+        start_date = str(start_date_obj)[:10]  # Convert numpy datetime to string
     
     results = {
         "supplement": supplement_name,
@@ -284,10 +300,10 @@ def analyze_supplement_effectiveness(supplement_name: str,
         effect_analysis = analyzer.estimate_rdd_effect(metric, start_date)
         results["metric_effects"][metric] = effect_analysis
         
-        # Simple significance check (could be improved with proper p-values)
-        if "treatment_effect" in effect_analysis:
+        # Proper significance check using p-values
+        if "treatment_effect" in effect_analysis and "statistically_significant" in effect_analysis:
             total_effects += 1
-            if abs(effect_analysis["treatment_effect"]) > 0.1:  # Threshold for meaningful effect
+            if effect_analysis["statistically_significant"]:
                 significant_effects += 1
     
     if total_effects > 0:
