@@ -1,0 +1,16 @@
+date,metric_name,value,unit
+2024-01-01,resting_heart_rate,62,bpm
+2024-01-01,sleep_hours,7.5,hours
+2024-01-01,steps,8500,count
+2024-01-02,resting_heart_rate,61,bpm
+2024-01-02,sleep_hours,8.2,hours
+2024-01-02,steps,9200,count
+2024-01-03,resting_heart_rate,63,bpm
+2024-01-03,sleep_hours,7.1,hours
+2024-01-03,steps,7800,count
+2024-01-04,resting_heart_rate,60,bpm
+2024-01-04,sleep_hours,8.0,hours
+2024-01-04,steps,10500,count
+2024-01-05,resting_heart_rate,64,bpm
+2024-01-05,sleep_hours,6.8,hours
+2024-01-05,steps,6200,count

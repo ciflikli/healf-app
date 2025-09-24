@@ -4,4 +4,13 @@ version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "fastapi>=0.117.1",
+    "openai>=1.109.1",
+    "polars>=1.33.1",
+    "polars-ols>=0.3.5",
+    "python-multipart>=0.0.20",
+    "scipy>=1.16.2",
+    "statsmodels>=0.14.5",
+    "uvicorn>=0.37.0",
+]
