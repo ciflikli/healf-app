@@ -331,14 +331,17 @@
                     filteredBiomarkers = Object.values(latest);
                 }
                 
-                const names = filteredBiomarkers.map(b => b.name);
-                const values = filteredBiomarkers.map(b => b.value);
+                // Sort biomarkers by value for easier reading
+                const sortedBiomarkers = filteredBiomarkers.sort((a, b) => b.value - a.value);
+                const names = sortedBiomarkers.map(b => b.name);
+                const values = sortedBiomarkers.map(b => b.value);
                 
-                // Use viridis colorscale
+                // Use viridis colorscale with horizontal bars
                 const trace = {
-                    x: names,
-                    y: values,
+                    x: values,  // Values on x-axis (horizontal)
+                    y: names,   // Names on y-axis
                     type: 'bar',
+                    orientation: 'h',  // Horizontal bars
                     marker: {
                         color: values,
                         colorscale: 'Viridis',
@@ -347,14 +350,14 @@
                             title: 'Biomarker Values'
                         }
                     },
-                    hovertemplate: '<b>%{x}</b><br>Value: %{y}<br><extra></extra>'
+                    hovertemplate: '<b>%{y}</b><br>Value: %{x}<br><extra></extra>'
                 };
                 
                 const layout = {
-                    title: 'Biomarker Values (Viridis Color Scale)',
-                    xaxis: { title: 'Biomarkers', tickangle: 45 },
-                    yaxis: { title: 'Values' },
-                    margin: { l: 60, r: 40, t: 60, b: 100 },
+                    title: 'Biomarker Values (Sorted by Value, Viridis Color Scale)',
+                    xaxis: { title: 'Values' },
+                    yaxis: { title: 'Biomarkers' },
+                    margin: { l: 150, r: 60, t: 60, b: 60 },  // More left margin for biomarker names
                     template: 'plotly_white'
                 };
                 
