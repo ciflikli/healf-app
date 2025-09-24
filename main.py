@@ -5,12 +5,17 @@ import sqlite3
 import polars as pl
 import json
 import os
+import time
 from datetime import datetime
 from typing import List, Dict, Any
 from statistical_analysis import RegressionDiscontinuityAnalyzer, analyze_supplement_effectiveness, build_rdd_plot_series, decompose_metric_arima
 from openai_insights import generate_health_insights, predict_biomarker_changes, analyze_biomarker_correlations, generate_biomarker_delta_predictions
 
 app = FastAPI(title="Health Data Analytics", version="1.0.0")
+
+# Cache for biomarker predictions to avoid slow repeated API calls
+biomarker_prediction_cache = {}
+CACHE_EXPIRY_HOURS = 1  # Cache results for 1 hour
 
 # Database initialization
 def init_database():
@@ -421,18 +426,54 @@ async def get_rdd_plot_data(metric_name: str, intervention_date: str, bandwidth:
 async def get_biomarker_delta_prediction(biomarker_name: str, months_ahead: int = 6):
     """Get AI-powered biomarker delta prediction with directional improvement logic"""
     try:
-        # Get current biomarkers and supplements
+        print(f"DEBUG: Starting prediction for {biomarker_name}, {months_ahead} months")
+        
+        # Create cache key from biomarker name and months ahead
+        cache_key = f"{biomarker_name.lower()}_{months_ahead}"
+        current_time = time.time()
+        
+        print(f"DEBUG: Cache key: {cache_key}")
+        
+        # Check cache first
+        if cache_key in biomarker_prediction_cache:
+            cached_data, cached_time = biomarker_prediction_cache[cache_key]
+            # Return cached result if within expiry time (1 hour = 3600 seconds)
+            if current_time - cached_time < CACHE_EXPIRY_HOURS * 3600:
+                print("DEBUG: Returning cached result")
+                # Create a copy of cached data and add cache indicators
+                result = cached_data.copy()
+                result["cached"] = True
+                result["cached_at"] = datetime.fromtimestamp(cached_time).isoformat()
+                return result
+        
+        print("DEBUG: Cache miss - generating new prediction")
+        
+        # Cache miss or expired - generate new prediction
         biomarkers = await get_biomarkers()
+        print(f"DEBUG: Got {len(biomarkers)} biomarkers")
+        
         supplements = await get_supplements()
+        print(f"DEBUG: Got {len(supplements)} supplements")
         
         # Generate delta prediction
+        print("DEBUG: Calling generate_biomarker_delta_predictions")
         prediction = generate_biomarker_delta_predictions(
             biomarker_name, biomarkers, supplements, months_ahead
         )
+        print("DEBUG: Got prediction result")
         
-        return prediction
+        # Create result with cache indicator and store clean copy in cache
+        result = prediction.copy()
+        result["cached"] = False
+        
+        # Store clean prediction (without cache indicators) in cache
+        biomarker_prediction_cache[cache_key] = (prediction, current_time)
+        print("DEBUG: Cached result, returning")
+        
+        return result
     
     except Exception as e:
+        print(f"DEBUG: Exception in prediction endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Biomarker delta prediction failed: {str(e)}")
 
 
