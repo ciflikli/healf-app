@@ -55,10 +55,21 @@ async def generate_supplement_biomarkers(supplement_name: str, dosage: str = "")
             temperature=0.3
         )
         
-        return response.choices[0].message.content.strip()
+        # Robust response validation
+        if not response or not hasattr(response, 'choices') or len(response.choices) == 0:
+            print(f"OpenAI returned invalid response structure for {supplement_name}")
+            return generate_fallback_supplement_biomarkers(supplement_name, dosage)
+        
+        content = response.choices[0].message.content
+        if not content or not isinstance(content, str) or not content.strip():
+            print(f"OpenAI returned empty/invalid content for {supplement_name}")
+            return generate_fallback_supplement_biomarkers(supplement_name, dosage)
+        
+        return content.strip()
     
     except Exception as e:
-        print(f"LLM call failed for {supplement_name}: {str(e)}")
+        print(f"OpenAI call failed for {supplement_name}: {str(e)}")
+        # Fall back on any OpenAI API error (quota, model not found, rate limit, network, etc.)
         return generate_fallback_supplement_biomarkers(supplement_name, dosage)
 
 def generate_fallback_supplement_biomarkers(supplement_name: str, dosage: str) -> str:
@@ -138,13 +149,22 @@ def generate_health_insights(biomarker_data: List[Dict],
             response_format={"type": "json_object"}
         )
         
-        return json.loads(response.choices[0].message.content)
-    
-    except Exception as e:
-        error_msg = str(e)
-        if "insufficient_quota" in error_msg or "quota" in error_msg:
+        # Robust response validation
+        if not response or not hasattr(response, 'choices') or len(response.choices) == 0:
+            print("OpenAI returned invalid response structure for health insights")
             return generate_fallback_insights(biomarker_data, supplement_effects, weekly_changes)
-        return {"error": f"Failed to generate insights: {error_msg}"}
+        
+        content = response.choices[0].message.content
+        if not content or not isinstance(content, str) or not content.strip():
+            print("OpenAI returned empty/invalid content for health insights")
+            return generate_fallback_insights(biomarker_data, supplement_effects, weekly_changes)
+        
+        return json.loads(content)
+    
+    except (json.JSONDecodeError, Exception) as e:
+        print(f"OpenAI health insights failed: {str(e)}")
+        # Fall back on any error (quota, model not found, rate limit, JSON parsing, network, etc.)
+        return generate_fallback_insights(biomarker_data, supplement_effects, weekly_changes)
 
 
 def predict_biomarker_changes(current_biomarkers: List[Dict],
@@ -204,13 +224,22 @@ def predict_biomarker_changes(current_biomarkers: List[Dict],
             response_format={"type": "json_object"}
         )
         
-        return json.loads(response.choices[0].message.content)
-    
-    except Exception as e:
-        error_msg = str(e)
-        if "insufficient_quota" in error_msg or "quota" in error_msg:
+        # Robust response validation
+        if not response or not hasattr(response, 'choices') or len(response.choices) == 0:
+            print("OpenAI returned invalid response structure for biomarker predictions")
             return generate_fallback_predictions(current_biomarkers, supplement_timeline, health_trends)
-        return {"error": f"Failed to generate predictions: {error_msg}"}
+        
+        content = response.choices[0].message.content
+        if not content or not isinstance(content, str) or not content.strip():
+            print("OpenAI returned empty/invalid content for biomarker predictions")
+            return generate_fallback_predictions(current_biomarkers, supplement_timeline, health_trends)
+        
+        return json.loads(content)
+    
+    except (json.JSONDecodeError, Exception) as e:
+        print(f"OpenAI biomarker predictions failed: {str(e)}")
+        # Fall back on any error (quota, model not found, rate limit, JSON parsing, network, etc.)
+        return generate_fallback_predictions(current_biomarkers, supplement_timeline, health_trends)
 
 
 def generate_fallback_insights(biomarker_data: List[Dict], 
@@ -534,9 +563,9 @@ def generate_biomarker_delta_predictions(biomarker_name: str,
         Predict the delta change for biomarker '{biomarker_name}' over the next {months_ahead} months.
         
         Current Information:
-        - Current {biomarker_name}: {current_value} {current_biomarker.get('unit', '')}
+        - Current {biomarker_name}: {current_value} {current_biomarker.get('unit', '') if current_biomarker else ''}
         - For this biomarker: {direction_context}
-        - Reference range: {current_biomarker.get('reference_range_min', 'N/A')} - {current_biomarker.get('reference_range_max', 'N/A')}
+        - Reference range: {current_biomarker.get('reference_range_min', 'N/A') if current_biomarker else 'N/A'} - {current_biomarker.get('reference_range_max', 'N/A') if current_biomarker else 'N/A'}
         
         Relevant Supplements:
         {supplement_context}
@@ -573,7 +602,19 @@ def generate_biomarker_delta_predictions(biomarker_name: str,
             response_format={"type": "json_object"}
         )
         
-        result = json.loads(response.choices[0].message.content)
+        # Robust response validation
+        if not response or not hasattr(response, 'choices') or len(response.choices) == 0:
+            print(f"OpenAI returned invalid response structure for biomarker delta: {biomarker_name}")
+            return generate_fallback_biomarker_delta(biomarker_name, current_value, 
+                                                   is_higher_better, relevant_supplements, months_ahead)
+        
+        content = response.choices[0].message.content
+        if not content or not isinstance(content, str) or not content.strip():
+            print(f"OpenAI returned empty/invalid content for biomarker delta: {biomarker_name}")
+            return generate_fallback_biomarker_delta(biomarker_name, current_value, 
+                                                   is_higher_better, relevant_supplements, months_ahead)
+        
+        result = json.loads(content)
         
         # Add metadata
         result["analysis_method"] = "OpenAI GPT-5 Analysis"
@@ -582,16 +623,15 @@ def generate_biomarker_delta_predictions(biomarker_name: str,
         
         return result
         
-    except Exception as e:
-        error_msg = str(e)
-        if "insufficient_quota" in error_msg or "quota" in error_msg:
-            return generate_fallback_biomarker_delta(biomarker_name, current_value, 
-                                                   is_higher_better, relevant_supplements, months_ahead)
-        return {"error": f"Failed to generate biomarker delta prediction: {error_msg}"}
+    except (json.JSONDecodeError, Exception) as e:
+        print(f"OpenAI biomarker delta failed for {biomarker_name}: {str(e)}")
+        # Fall back on any error (quota, model not found, rate limit, JSON parsing, network, etc.)
+        return generate_fallback_biomarker_delta(biomarker_name, current_value, 
+                                               is_higher_better, relevant_supplements, months_ahead)
 
 
 def generate_fallback_biomarker_delta(biomarker_name: str, current_value: float,
-                                     is_higher_better: bool, relevant_supplements: List[Dict],
+                                     is_higher_better: bool | None, relevant_supplements: List[Dict],
                                      months_ahead: int) -> Dict:
     """
     Generate statistical fallback for biomarker delta predictions
@@ -726,7 +766,12 @@ def analyze_biomarker_correlations(biomarker_data: List[Dict],
             response_format={"type": "json_object"}
         )
         
-        return json.loads(response.choices[0].message.content)
+        content = response.choices[0].message.content
+        if content is None:
+            print("OpenAI returned None content for correlation analysis")
+            return {"error": "OpenAI returned empty response"}
+        
+        return json.loads(content)
     
     except Exception as e:
         return {"error": f"Failed to analyze correlations: {str(e)}"}
@@ -783,7 +828,12 @@ def generate_supplement_recommendations(current_biomarkers: List[Dict],
             response_format={"type": "json_object"}
         )
         
-        return json.loads(response.choices[0].message.content)
+        content = response.choices[0].message.content
+        if content is None:
+            print("OpenAI returned None content for supplement recommendations")
+            return {"error": "OpenAI returned empty response"}
+        
+        return json.loads(content)
     
     except Exception as e:
         return {"error": f"Failed to generate recommendations: {str(e)}"}
