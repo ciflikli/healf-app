@@ -541,23 +541,30 @@ def generate_biomarker_delta_predictions(biomarker_name: str,
         Relevant Supplements:
         {supplement_context}
         
+        CRITICAL DIRECTIONAL LOGIC:
+        - If "higher values indicate improvement": positive delta = improvement, negative delta = decline
+        - If "lower values indicate improvement": NEGATIVE delta = improvement, positive delta = decline
+        - Examples: LDL cholesterol going from 3.5 to 3.2 (delta: -0.3) = IMPROVEMENT
+        - Examples: Vitamin D going from 30 to 40 (delta: +10) = IMPROVEMENT
+        
         Please provide a JSON response with:
         {{
             "biomarker": "{biomarker_name}",
-            "predicted_delta": number (positive/negative change),
+            "predicted_delta": number (positive/negative change - can be negative for improvements!),
             "predicted_value": number (current + delta),
-            "is_improvement": boolean (true if delta represents improvement),
+            "is_improvement": boolean (true if delta represents improvement in the RIGHT DIRECTION),
             "confidence": number (0-1),
-            "reasoning": "explanation of prediction",
+            "reasoning": "explanation of prediction and directional logic",
             "recommendation": "specific action recommendation",
             "timeframe": "when to expect this change"
         }}
         
         Consider:
-        - Direction of improvement for this biomarker
-        - Expected supplement effects
+        - DIRECTION OF IMPROVEMENT: {direction_context}
+        - Expected supplement effects 
         - Realistic physiological changes over {months_ahead} months
         - Individual variation and reference ranges
+        - REMEMBER: Negative deltas can be improvements if lower values are better!
         """
         
         response = openai_client.chat.completions.create(
