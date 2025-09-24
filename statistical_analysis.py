@@ -419,11 +419,15 @@ def decompose_metric_arima(metric_name: str, freq: str = 'D', horizon: int = 30)
         ts = pd.Series(values.values, index=pd.to_datetime(dates.values))
         ts = ts.asfreq(freq)  # Set frequency
         
+        # Helper function to clean values for JSON serialization
+        def clean_json_values(values):
+            return [float(v) if not (np.isnan(v) or np.isinf(v)) else 0.0 for v in values]
+        
         result = {
             "metric": metric_name,
             "original": {
                 "dates": [d.strftime('%Y-%m-%d') for d in ts.index],
-                "values": ts.values.tolist()
+                "values": clean_json_values(ts.values)
             }
         }
         
