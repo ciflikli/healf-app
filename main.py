@@ -356,47 +356,60 @@ async def dashboard():
             }
             
             function updateBiomarkerChart(data) {
-                const biomarkerGroups = {};
+                // Show vertical bar chart of latest biomarker values
+                if (data.length === 0) return;
+                
+                // Get latest value for each biomarker
+                const latest = {};
                 data.forEach(item => {
-                    if (!biomarkerGroups[item.name]) {
-                        biomarkerGroups[item.name] = { x: [], y: [] };
+                    const biomarker = item.name;
+                    const date = new Date(item.test_date);
+                    if (!latest[biomarker] || new Date(latest[biomarker].test_date) < date) {
+                        latest[biomarker] = item;
                     }
-                    biomarkerGroups[item.name].x.push(item.test_date);
-                    biomarkerGroups[item.name].y.push(item.value);
                 });
                 
-                const traces = Object.keys(biomarkerGroups).map(name => ({
-                    x: biomarkerGroups[name].x,
-                    y: biomarkerGroups[name].y,
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: name,
-                    line: { width: 3 }
-                }));
+                const names = Object.keys(latest);
+                const values = names.map(name => latest[name].value);
+                const units = names.map(name => latest[name].unit || '');
                 
-                Plotly.newPlot('biomarkerChart', traces, {
-                    title: 'Biomarker Trends Over Time',
-                    xaxis: { title: 'Date' },
+                const trace = {
+                    x: names,
+                    y: values,
+                    type: 'bar',
+                    marker: {
+                        color: values.map((_, i) => `hsl(${i * 137.5 % 360}, 70%, 50%)`)
+                    },
+                    text: values.map((v, i) => `${v} ${units[i]}`),
+                    textposition: 'auto'
+                };
+                
+                Plotly.newPlot('biomarkerChart', [trace], {
+                    title: 'Latest Biomarker Values',
+                    xaxis: { title: 'Biomarker', tickangle: -45 },
                     yaxis: { title: 'Value' },
-                    responsive: true
+                    responsive: true,
+                    margin: { b: 100 }
                 });
             }
             
             function updateSupplementChart(data) {
-                // Placeholder for supplement timeline visualization
+                // Show supplement timeline with health metrics overlay
                 const trace = {
                     x: data.map(d => d.measurement_date),
                     y: data.map(d => d.value),
                     type: 'scatter',
                     mode: 'lines+markers',
-                    name: 'Health Metrics'
+                    name: 'Health Metrics',
+                    line: { color: '#007bff', width: 2 }
                 };
                 
                 Plotly.newPlot('supplementChart', [trace], {
-                    title: 'Health Metrics Timeline',
+                    title: 'Supplement Timeline & Health Metrics',
                     xaxis: { title: 'Date' },
                     yaxis: { title: 'Value' },
-                    responsive: true
+                    responsive: true,
+                    showlegend: true
                 });
             }
             
