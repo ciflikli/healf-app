@@ -9,19 +9,22 @@ echo "Setting up virtual environment..."
 python -m venv venv
 source venv/bin/activate
 
+# Capture the virtual environment's Python executable
+VENV_PYTHON=$(which python)
+
 # Ensure pip is available
 echo "Ensuring pip is available..."
-python -m ensurepip --upgrade
-python -m pip install --upgrade pip
+$VENV_PYTHON -m ensurepip --upgrade
+$VENV_PYTHON -m pip install --upgrade pip
 
 # Install fundamental packages for dependency resolution
 echo "Installing setuptools and wheel..."
-python -m pip install --upgrade setuptools wheel
+$VENV_PYTHON -m pip install --upgrade setuptools wheel
 
 # Install dependencies from pyproject.toml
 echo "Installing dependencies..."
-python -m pip install -e .
+$VENV_PYTHON -m pip install -e .
 
 # Start the application
 echo "Starting the application..."
-python main.py
+$VENV_PYTHON main.py
