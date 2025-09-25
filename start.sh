@@ -5,6 +5,10 @@ echo "Setting up virtual environment..."
 python -m venv venv
 source venv/bin/activate
 
+# Ensure pip is available
+echo "Ensuring pip is available..."
+python -m ensurepip --upgrade
+
 # Install dependencies from pyproject.toml
 echo "Installing dependencies..."
 python -m pip install -e .
