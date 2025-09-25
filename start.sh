@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This is a Python project - no npm needed
+
 # Use Python 3.11 directly from Nix
 echo "Using Python 3.11 from Nix environment..."
 python3 --version
