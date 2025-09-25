@@ -3,7 +3,7 @@ modules = ["python-3.11", "postgresql-16"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["arrow-cpp", "libiconv", "libxcrypt", "pkg-config", "xsimd"]
+packages = ["arrow-cpp", "libiconv", "libxcrypt", "pkg-config", "xsimd", "python3"]
 
 [unitTest]
 language = "python3"
