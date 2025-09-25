@@ -1,9 +1,9 @@
-entrypoint = "main.py"
+entrypoint = "start.sh"
 modules = ["python-3.11", "postgresql-16"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["arrow-cpp", "libiconv", "libxcrypt", "pkg-config", "xsimd"]
+packages = ["python311", "python311Packages.pip", "python311Packages.setuptools", "python311Packages.wheel", "arrow-cpp", "libiconv", "libxcrypt", "pkg-config", "xsimd"]
 
 [unitTest]
 language = "python3"
@@ -12,7 +12,7 @@ language = "python3"
 requiredFiles = [".replit", "replit.nix"]
 
 [deployment]
-run = ["python3", "main.py"]
+run = ["bash", "start.sh"]
 deploymentTarget = "cloudrun"
 
 [agent]
@@ -37,7 +37,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python main.py"
+args = "bash start.sh"
 waitForPort = 5000
 
 [workflows.workflow.metadata]
