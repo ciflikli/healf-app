@@ -1,35 +1,13 @@
 #!/bin/bash
 
-# Diagnostic: Check base Python installation
-echo "Diagnosing base Python installation..."
-python --version
-python -c "import _signal; print('_signal module available in base Python')" || echo "ERROR: _signal module NOT available in base Python"
+# Use Python 3.11 directly from Nix
+echo "Using Python 3.11 from Nix environment..."
+python3.11 --version
 
-# Remove any existing virtual environment to ensure a clean setup
-echo "Cleaning up any existing virtual environment..."
-rm -rf venv
-
-# Create and activate virtual environment
-echo "Setting up virtual environment..."
-python -m venv venv
-source venv/bin/activate
-
-# Capture the virtual environment's Python executable
-VENV_PYTHON=$(which python)
-
-# Ensure pip is available
-echo "Ensuring pip is available..."
-$VENV_PYTHON -m ensurepip --upgrade
-$VENV_PYTHON -m pip install --upgrade pip
-
-# Install fundamental packages for dependency resolution
-echo "Installing setuptools and wheel..."
-$VENV_PYTHON -m pip install --upgrade setuptools wheel
-
-# Install dependencies from pyproject.toml
+# Install dependencies directly without virtual environment
 echo "Installing dependencies..."
-$VENV_PYTHON -m pip install -e .
+python3.11 -m pip install --user fastapi uvicorn numpy openai polars polars-ols pyarrow python-multipart scipy statsmodels
 
-# Start the application
-echo "Starting the application..."
-$VENV_PYTHON main.py
+# Start the FastAPI application with uvicorn
+echo "Starting FastAPI server on port 5000..."
+python3.11 -m uvicorn main:app --host 0.0.0.0 --port 5000
