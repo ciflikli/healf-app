@@ -1,15 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Health Analytics Platform</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Analytics Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         :root {
             /* Color System */
@@ -18,11 +14,10 @@
             --primary-500: #3b82f6;
             --primary-600: #2563eb;
             --primary-700: #1d4ed8;
-            --primary-900: #1e3a8a;
             
-            --success-50: #ecfdf5;
-            --success-500: #10b981;
-            --success-600: #059669;
+            --success-50: #f0fdf4;
+            --success-500: #22c55e;
+            --success-600: #16a34a;
             
             --warning-50: #fffbeb;
             --warning-500: #f59e0b;
@@ -43,1892 +38,1302 @@
             --gray-800: #1f2937;
             --gray-900: #111827;
             
-            /* Spacing System (8px grid) */
+            /* Spacing */
             --space-1: 0.25rem;
             --space-2: 0.5rem;
             --space-3: 0.75rem;
             --space-4: 1rem;
-            --space-5: 1.25rem;
             --space-6: 1.5rem;
             --space-8: 2rem;
-            --space-10: 2.5rem;
             --space-12: 3rem;
-            --space-16: 4rem;
-            --space-20: 5rem;
-            
-            /* Typography */
-            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-size-xs: 0.75rem;
-            --font-size-sm: 0.875rem;
-            --font-size-base: 1rem;
-            --font-size-lg: 1.125rem;
-            --font-size-xl: 1.25rem;
-            --font-size-2xl: 1.5rem;
-            --font-size-3xl: 1.875rem;
-            --font-size-4xl: 2.25rem;
             
             /* Shadows */
             --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-            
-            /* Border Radius */
-            --radius-sm: 0.25rem;
-            --radius-md: 0.375rem;
-            --radius-lg: 0.5rem;
-            --radius-xl: 0.75rem;
-            --radius-2xl: 1rem;
         }
-        
+
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
-        
+
         body {
-            font-family: var(--font-family);
-            font-size: var(--font-size-base);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--gray-50);
+            color: var(--gray-900);
             line-height: 1.6;
-            color: var(--gray-800);
-            background: linear-gradient(135deg, var(--gray-50) 0%, var(--primary-50) 100%);
+        }
+
+        .dashboard-container {
+            display: flex;
             min-height: 100vh;
         }
-        
-        /* Layout Components */
-        .app-container {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            min-height: 100vh;
-        }
-        
+
+        /* Sidebar */
         .sidebar {
+            width: 280px;
             background: white;
             border-right: 1px solid var(--gray-200);
             padding: var(--space-6);
             box-shadow: var(--shadow-sm);
         }
-        
-        .main-content {
-            padding: var(--space-8);
-            overflow-y: auto;
-        }
-        
+
         .logo {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            margin-bottom: var(--space-8);
-            font-size: var(--font-size-xl);
+            font-size: 1.5rem;
             font-weight: 700;
             color: var(--primary-600);
+            margin-bottom: var(--space-8);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
         }
-        
+
         .nav-section {
             margin-bottom: var(--space-6);
         }
-        
+
         .nav-title {
-            font-size: var(--font-size-xs);
+            font-size: 0.75rem;
             font-weight: 600;
+            color: var(--gray-500);
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            color: var(--gray-500);
             margin-bottom: var(--space-3);
         }
-        
+
         .nav-item {
             display: flex;
             align-items: center;
-            gap: var(--space-3);
             padding: var(--space-3) var(--space-4);
-            border-radius: var(--radius-lg);
-            color: var(--gray-600);
+            border-radius: 8px;
+            color: var(--gray-700);
             text-decoration: none;
-            font-weight: 500;
             transition: all 0.2s ease;
             margin-bottom: var(--space-1);
+            cursor: pointer;
         }
-        
-        .nav-item:hover, .nav-item.active {
-            background: var(--primary-50);
+
+        .nav-item:hover {
+            background-color: var(--primary-50);
             color: var(--primary-600);
         }
-        
-        .nav-item i {
-            width: 20px;
-            text-align: center;
+
+        .nav-item.active {
+            background-color: var(--primary-100);
+            color: var(--primary-700);
+            font-weight: 500;
         }
-        
-        /* Card Components */
-        .card {
-            background: white;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--gray-100);
-            overflow: hidden;
-            transition: all 0.3s ease;
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: var(--space-8);
+            overflow-y: auto;
         }
-        
-        .card:hover {
-            box-shadow: var(--shadow-lg);
-            transform: translateY(-2px);
-        }
-        
-        .card-header {
-            padding: var(--space-6);
-            border-bottom: 1px solid var(--gray-100);
-            background: var(--gray-50);
-        }
-        
-        .card-title {
-            font-size: var(--font-size-lg);
-            font-weight: 600;
-            color: var(--gray-900);
-            margin-bottom: var(--space-2);
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-        }
-        
-        .card-subtitle {
-            font-size: var(--font-size-sm);
-            color: var(--gray-500);
-        }
-        
-        .card-content {
-            padding: var(--space-6);
-        }
-        
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: var(--space-6);
+
+        .page-header {
             margin-bottom: var(--space-8);
         }
-        
-        .stat-card {
-            background: white;
-            padding: var(--space-6);
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-md);
-            border-left: 4px solid var(--primary-500);
-            transition: all 0.3s ease;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-xl);
-        }
-        
-        .stat-value {
-            font-size: var(--font-size-3xl);
+
+        .page-title {
+            font-size: 2rem;
             font-weight: 700;
             color: var(--gray-900);
             margin-bottom: var(--space-2);
         }
-        
+
+        .page-subtitle {
+            color: var(--gray-600);
+            font-size: 1.1rem;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: var(--space-6);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--space-4);
+        }
+
+        /* Grid System */
+        .grid {
+            display: grid;
+            gap: var(--space-6);
+        }
+
+        .grid-cols-1 { grid-template-columns: 1fr; }
+        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+
+        .stat-card {
+            background: white;
+            padding: var(--space-6);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-600);
+            margin-bottom: var(--space-1);
+        }
+
         .stat-label {
-            font-size: var(--font-size-sm);
-            color: var(--gray-500);
+            color: var(--gray-600);
+            font-size: 0.875rem;
             font-weight: 500;
         }
-        
-        .stat-change {
-            font-size: var(--font-size-xs);
-            font-weight: 600;
-            margin-top: var(--space-2);
-        }
-        
-        .stat-change.positive {
-            color: var(--success-600);
-        }
-        
-        .stat-change.negative {
-            color: var(--error-600);
-        }
-        
-        /* Form Components */
+
+        /* Forms */
         .form-group {
-            margin-bottom: var(--space-5);
+            margin-bottom: var(--space-4);
         }
-        
+
         .form-label {
             display: block;
-            font-size: var(--font-size-sm);
             font-weight: 500;
             color: var(--gray-700);
             margin-bottom: var(--space-2);
         }
-        
+
         .form-input, .form-select {
             width: 100%;
             padding: var(--space-3) var(--space-4);
             border: 1px solid var(--gray-300);
-            border-radius: var(--radius-lg);
-            font-size: var(--font-size-base);
+            border-radius: 8px;
+            font-size: 0.875rem;
             transition: all 0.2s ease;
-            background: white;
         }
-        
+
         .form-input:focus, .form-select:focus {
             outline: none;
             border-color: var(--primary-500);
             box-shadow: 0 0 0 3px var(--primary-50);
         }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: var(--space-4);
-            align-items: end;
-        }
-        
-        /* Button Components */
+
+        /* Buttons */
         .btn {
             display: inline-flex;
             align-items: center;
-            gap: var(--space-2);
+            justify-content: center;
             padding: var(--space-3) var(--space-6);
-            border: none;
-            border-radius: var(--radius-lg);
-            font-size: var(--font-size-sm);
+            border-radius: 8px;
             font-weight: 500;
             text-decoration: none;
-            cursor: pointer;
             transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-        
-        .btn-primary {
-            background: var(--primary-600);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: var(--primary-700);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .btn-secondary {
-            background: var(--gray-100);
-            color: var(--gray-700);
-        }
-        
-        .btn-secondary:hover {
-            background: var(--gray-200);
-        }
-        
-        .btn-success {
-            background: var(--success-600);
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: var(--success-700);
-        }
-        
-        /* Upload Zone */
-        .upload-zone {
-            border: 2px dashed var(--gray-300);
-            border-radius: var(--radius-xl);
-            padding: var(--space-12);
-            text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-            background: var(--gray-50);
+            border: none;
+            font-size: 0.875rem;
         }
-        
-        .upload-zone:hover {
-            border-color: var(--primary-500);
-            background: var(--primary-50);
+
+        .btn-primary {
+            background-color: var(--primary-600);
+            color: white;
         }
-        
-        .upload-zone.dragover {
-            border-color: var(--primary-600);
-            background: var(--primary-100);
-            transform: scale(1.02);
+
+        .btn-primary:hover {
+            background-color: var(--primary-700);
         }
-        
-        .upload-icon {
-            font-size: var(--font-size-4xl);
-            color: var(--gray-400);
-            margin-bottom: var(--space-4);
-        }
-        
-        .upload-text {
-            font-size: var(--font-size-lg);
-            font-weight: 500;
+
+        .btn-secondary {
+            background-color: var(--gray-100);
             color: var(--gray-700);
-            margin-bottom: var(--space-2);
         }
-        
-        .upload-subtext {
-            font-size: var(--font-size-sm);
-            color: var(--gray-500);
+
+        .btn-secondary:hover {
+            background-color: var(--gray-200);
         }
-        
-        /* Table Components */
-        .table-container {
-            overflow-x: auto;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--gray-200);
-        }
-        
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: var(--font-size-sm);
-        }
-        
-        .data-table th {
-            background: var(--gray-50);
-            padding: var(--space-4);
-            text-align: left;
-            font-weight: 600;
-            color: var(--gray-700);
-            border-bottom: 1px solid var(--gray-200);
-        }
-        
-        .data-table td {
-            padding: var(--space-4);
-            border-bottom: 1px solid var(--gray-100);
-        }
-        
-        .data-table tr:hover {
-            background: var(--gray-50);
-        }
-        
-        /* Prediction Cards */
-        .prediction-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: var(--space-6);
-        }
-        
-        .prediction-card {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: var(--space-6);
-            box-shadow: var(--shadow-md);
-            border-left: 4px solid var(--gray-300);
-            transition: all 0.3s ease;
-        }
-        
-        .prediction-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .prediction-card.improvement {
-            border-left-color: var(--success-500);
-        }
-        
-        .prediction-card.neutral {
-            border-left-color: var(--warning-500);
-        }
-        
-        .prediction-card.decline {
-            border-left-color: var(--error-500);
-        }
-        
-        .prediction-header {
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            margin-bottom: var(--space-4);
-        }
-        
-        .prediction-header h4 {
-            font-size: var(--font-size-lg);
-            font-weight: 600;
-            color: var(--gray-900);
-        }
-        
-        .time-horizon {
-            font-size: var(--font-size-xs);
-            font-weight: 500;
-            color: var(--gray-500);
-            background: var(--gray-100);
-            padding: var(--space-1) var(--space-3);
-            border-radius: var(--radius-md);
-        }
-        
-        .delta-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--space-4);
-        }
-        
-        .delta-value {
-            font-size: var(--font-size-2xl);
-            font-weight: 700;
-            color: var(--primary-600);
-        }
-        
-        .improvement-indicator {
-            font-size: var(--font-size-sm);
-            font-weight: 500;
-        }
-        
-        .prediction-details {
-            margin-bottom: var(--space-4);
-        }
-        
-        .prediction-details p {
-            margin-bottom: var(--space-2);
-            font-size: var(--font-size-sm);
-            color: var(--gray-600);
-        }
-        
-        .reasoning, .recommendation {
-            font-size: var(--font-size-sm);
-            color: var(--gray-600);
-            line-height: 1.5;
-            margin-bottom: var(--space-3);
-        }
-        
-        .recommendation {
-            background: var(--primary-50);
-            padding: var(--space-3);
-            border-radius: var(--radius-md);
-            border-left: 3px solid var(--primary-500);
-        }
-        
-        /* Chart Containers */
-        .chart-container {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: var(--space-4);
-            margin-bottom: var(--space-6);
-            min-height: 400px;
-        }
-        
+
         /* Loading States */
         .loading {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: var(--space-12);
+            padding: var(--space-8);
             color: var(--gray-500);
         }
-        
+
         .spinner {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             border: 2px solid var(--gray-200);
-            border-top: 2px solid var(--primary-500);
+            border-top: 2px solid var(--primary-600);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-right: var(--space-3);
+            margin-right: var(--space-2);
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
+
+        /* File Upload */
+        .file-upload {
+            border: 2px dashed var(--gray-300);
+            border-radius: 12px;
+            padding: var(--space-8);
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary-500);
+            background-color: var(--primary-50);
+        }
+
+        .file-upload.dragover {
+            border-color: var(--primary-600);
+            background-color: var(--primary-100);
+        }
+
+        /* Tables */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--space-4);
+        }
+
+        .table th,
+        .table td {
+            padding: var(--space-3) var(--space-4);
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table th {
+            font-weight: 600;
+            color: var(--gray-700);
+            background-color: var(--gray-50);
+        }
+
+        .table tr:hover {
+            background-color: var(--gray-50);
+        }
+
         /* Responsive Design */
-        @media (max-width: 1024px) {
-            .app-container {
-                grid-template-columns: 1fr;
+        @media (max-width: 768px) {
+            .dashboard-container {
+                flex-direction: column;
             }
             
             .sidebar {
-                display: none;
+                width: 100%;
+                padding: var(--space-4);
             }
             
             .main-content {
                 padding: var(--space-4);
             }
             
+            .grid-cols-2,
+            .grid-cols-3,
+            .grid-cols-4 {
+                grid-template-columns: 1fr;
+            }
+            
             .stats-grid {
                 grid-template-columns: 1fr;
             }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
         }
-        
-        @media (max-width: 640px) {
-            .prediction-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .card-content {
-                padding: var(--space-4);
-            }
-        }
-        
-        /* Utility Classes */
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-        .font-medium { font-weight: 500; }
-        .font-semibold { font-weight: 600; }
-        .font-bold { font-weight: 700; }
-        .text-sm { font-size: var(--font-size-sm); }
-        .text-xs { font-size: var(--font-size-xs); }
-        .text-gray-500 { color: var(--gray-500); }
-        .text-gray-600 { color: var(--gray-600); }
-        .text-primary { color: var(--primary-600); }
-        .text-success { color: var(--success-600); }
-        .text-error { color: var(--error-600); }
-        .mb-4 { margin-bottom: var(--space-4); }
-        .mb-6 { margin-bottom: var(--space-6); }
-        .mt-4 { margin-top: var(--space-4); }
-        .hidden { display: none; }
-        
-        /* Collapsible Sections */
-        .collapsible {
+
+        /* Chart Containers */
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: var(--space-6);
+            box-shadow: var(--shadow-sm);
             border: 1px solid var(--gray-200);
-            border-radius: var(--radius-lg);
-            margin-bottom: var(--space-4);
-            overflow: hidden;
+            margin-bottom: var(--space-6);
         }
-        
-        .collapsible-header {
-            background: var(--gray-50);
-            padding: var(--space-4);
-            cursor: pointer;
+
+        /* Hide sections initially */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Prediction Cards */
+        .prediction-card {
+            background: white;
+            border-radius: 12px;
+            padding: var(--space-6);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            margin-bottom: var(--space-4);
+        }
+
+        .prediction-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-weight: 500;
-            transition: background 0.2s ease;
+            margin-bottom: var(--space-4);
         }
-        
-        .collapsible-header:hover {
-            background: var(--gray-100);
+
+        .prediction-biomarker {
+            font-weight: 600;
+            color: var(--gray-900);
         }
-        
-        .collapsible-content {
-            padding: var(--space-6);
-            display: none;
+
+        .prediction-confidence {
+            font-size: 0.875rem;
+            color: var(--gray-600);
         }
-        
-        .collapsible.open .collapsible-content {
-            display: block;
+
+        .prediction-delta {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: var(--space-2);
         }
-        
-        .collapsible-icon {
-            transition: transform 0.2s ease;
+
+        .prediction-delta.positive {
+            color: var(--success-600);
         }
-        
-        .collapsible.open .collapsible-icon {
-            transform: rotate(180deg);
+
+        .prediction-delta.negative {
+            color: var(--error-600);
+        }
+
+        .prediction-reasoning {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            line-height: 1.5;
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
             <div class="logo">
-                <i class="fas fa-heartbeat"></i>
-                <span>Health Analytics</span>
+                <span>🏥</span>
+                Health Analytics
             </div>
             
             <nav>
                 <div class="nav-section">
                     <div class="nav-title">Overview</div>
-                    <a href="#dashboard" class="nav-item active" data-section="dashboard">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="#biomarkers" class="nav-item" data-section="biomarkers">
-                        <i class="fas fa-vial"></i>
-                        <span>Biomarkers</span>
-                    </a>
+                    <div class="nav-item active" onclick="showSection('overview')">Dashboard</div>
+                    <div class="nav-item" onclick="showSection('insights')">AI Insights</div>
                 </div>
                 
                 <div class="nav-section">
                     <div class="nav-title">Analysis</div>
-                    <a href="#rdd" class="nav-item" data-section="rdd">
-                        <i class="fas fa-chart-area"></i>
-                        <span>RDD Analysis</span>
-                    </a>
-                    <a href="#timeseries" class="nav-item" data-section="timeseries">
-                        <i class="fas fa-wave-square"></i>
-                        <span>Time Series</span>
-                    </a>
-                    <a href="#predictions" class="nav-item" data-section="predictions">
-                        <i class="fas fa-crystal-ball"></i>
-                        <span>AI Predictions</span>
-                    </a>
+                    <div class="nav-item" onclick="showSection('biomarkers')">Biomarkers</div>
+                    <div class="nav-item" onclick="showSection('supplements')">Supplements</div>
+                    <div class="nav-item" onclick="showSection('rdd-analysis')">RDD Analysis</div>
+                    <div class="nav-item" onclick="showSection('predictions')">Predictions</div>
                 </div>
                 
                 <div class="nav-section">
                     <div class="nav-title">Data</div>
-                    <a href="#upload" class="nav-item" data-section="upload">
-                        <i class="fas fa-upload"></i>
-                        <span>Upload Data</span>
-                    </a>
-                    <a href="#supplements" class="nav-item" data-section="supplements">
-                        <i class="fas fa-pills"></i>
-                        <span>Supplements</span>
-                    </a>
+                    <div class="nav-item" onclick="showSection('upload')">Upload Data</div>
+                    <div class="nav-item" onclick="showSection('health-metrics')">Health Metrics</div>
                 </div>
             </nav>
-        </aside>
-        
+        </div>
+
         <!-- Main Content -->
-        <main class="main-content">
-            <!-- Dashboard Section -->
-            <section id="dashboard-section" class="content-section">
-                <div class="mb-6">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Health Analytics Dashboard</h1>
-                    <p class="text-gray-600">Track biomarkers, analyze supplement effects, and predict health trends</p>
+        <div class="main-content">
+            <!-- Overview Section -->
+            <div id="overview" class="section active">
+                <div class="page-header">
+                    <h1 class="page-title">Health Analytics Dashboard</h1>
+                    <p class="page-subtitle">Track biomarkers, analyze supplement effectiveness, and predict health trends</p>
                 </div>
-                
+
                 <!-- Quick Stats -->
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-value" id="totalBiomarkers">-</div>
-                        <div class="stat-label">Total Biomarkers</div>
-                        <div class="stat-change positive" id="biomarkerChange">+2 this month</div>
+                        <div class="stat-value" id="biomarker-count">-</div>
+                        <div class="stat-label">Biomarkers Tracked</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value" id="activeSupplements">-</div>
+                        <div class="stat-value" id="supplement-count">-</div>
                         <div class="stat-label">Active Supplements</div>
-                        <div class="stat-change" id="supplementChange">Current regimen</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value" id="healthMetrics">-</div>
+                        <div class="stat-value" id="metric-count">-</div>
                         <div class="stat-label">Health Metrics</div>
-                        <div class="stat-change positive" id="metricsChange">Daily tracking</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value" id="significantEffects">-</div>
-                        <div class="stat-label">Significant Effects</div>
-                        <div class="stat-change" id="effectsChange">From RDD analysis</div>
+                        <div class="stat-value" id="days-tracked">-</div>
+                        <div class="stat-label">Days Tracked</div>
                     </div>
                 </div>
-                
-                <!-- Biomarker Trends Chart -->
-                <div class="card mb-6">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-vial text-primary"></i>
-                            Biomarker Trends
-                        </div>
-                        <div class="card-subtitle">Latest test results with reference ranges</div>
-                    </div>
-                    <div class="card-content">
-                        <div class="form-row mb-4">
-                            <div class="form-group">
-                                <label class="form-label">Test Date</label>
-                                <select id="biomarkerTestSelect" class="form-select" onchange="updateBiomarkerChart()">
-                                    <option value="latest">Latest Test</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <button onclick="loadBiomarkerDates()" class="btn btn-secondary">
-                                    <i class="fas fa-refresh"></i>
-                                    Refresh Dates
-                                </button>
-                            </div>
-                        </div>
-                        <div id="biomarkerChart" class="chart-container"></div>
-                    </div>
+
+                <!-- Recent Biomarkers Chart -->
+                <div class="chart-container">
+                    <h3 class="card-title">Recent Biomarker Trends</h3>
+                    <div id="biomarker-trends-chart"></div>
                 </div>
-            </section>
-            
-            <!-- Biomarkers Section -->
-            <section id="biomarkers-section" class="content-section hidden">
-                <div class="mb-6">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Biomarker Management</h1>
-                    <p class="text-gray-600">Add and track your lab test results</p>
+
+                <!-- Health Metrics Overview -->
+                <div class="chart-container">
+                    <h3 class="card-title">Health Metrics Overview</h3>
+                    <div id="health-metrics-chart"></div>
                 </div>
-                
+            </div>
+
+            <!-- AI Insights Section -->
+            <div id="insights" class="section">
+                <div class="page-header">
+                    <h1 class="page-title">AI-Powered Insights</h1>
+                    <p class="page-subtitle">Get intelligent analysis of your health data and supplement effectiveness</p>
+                </div>
+
                 <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-plus-circle text-success"></i>
-                            Add Blood Test Results
-                        </div>
+                    <button class="btn btn-primary" onclick="generateInsights()">Generate New Insights</button>
+                    <div id="insights-content" class="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        Analyzing your health data...
                     </div>
-                    <div class="card-content">
-                        <form onsubmit="addBiomarker(event)">
-                            <div class="form-row">
+                    <div id="insights-results"></div>
+                </div>
+            </div>
+
+            <!-- Biomarkers Section -->
+            <div id="biomarkers" class="section">
+                <div class="page-header">
+                    <h1 class="page-title">Biomarker Analysis</h1>
+                    <p class="page-subtitle">Track and analyze your laboratory test results</p>
+                </div>
+
+                <div class="grid grid-cols-1">
+                    <div class="card">
+                        <h3 class="card-title">Add New Biomarker</h3>
+                        <form id="biomarker-form">
+                            <div class="grid grid-cols-2">
                                 <div class="form-group">
                                     <label class="form-label">Biomarker Name</label>
-                                    <input type="text" id="biomarkerName" class="form-input" placeholder="e.g., Total Cholesterol" required>
+                                    <input type="text" class="form-input" name="name" required>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Value</label>
-                                    <input type="number" id="biomarkerValue" class="form-input" placeholder="5.2" step="0.01" required>
+                                    <input type="number" step="0.01" class="form-input" name="value" required>
                                 </div>
-                            </div>
-                            <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Unit</label>
-                                    <input type="text" id="biomarkerUnit" class="form-input" placeholder="mmol/L">
+                                    <input type="text" class="form-input" name="unit">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Test Date</label>
-                                    <input type="date" id="testDate" class="form-input" required>
+                                    <input type="date" class="form-input" name="test_date" required>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i>
-                                Add Biomarker
-                            </button>
+                            <button type="submit" class="btn btn-primary">Add Biomarker</button>
                         </form>
                     </div>
-                </div>
-            </section>
-            
-            <!-- RDD Analysis Section -->
-            <section id="rdd-section" class="content-section hidden">
-                <div class="mb-6">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Regression Discontinuity Analysis</h1>
-                    <p class="text-gray-600">Measure causal effects of supplement interventions</p>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-chart-area text-primary"></i>
-                            RDD Analysis Setup
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Health Metric</label>
-                                <select id="rddMetricSelect" class="form-select">
-                                    <option value="">Select a metric...</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Intervention Date</label>
-                                <select id="rddInterventionSelect" class="form-select">
-                                    <option value="">Select intervention date...</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <button onclick="analyzeRDDWithPlots()" class="btn btn-primary">
-                                    <i class="fas fa-chart-line"></i>
-                                    Analyze Effects
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div id="rddResults" class="mt-6"></div>
-                        <div id="rddPlotChart" class="chart-container"></div>
+
+                    <div class="card">
+                        <h3 class="card-title">Current Biomarkers</h3>
+                        <div id="biomarkers-table"></div>
                     </div>
                 </div>
-            </section>
-            
-            <!-- Time Series Section -->
-            <section id="timeseries-section" class="content-section hidden">
-                <div class="mb-6">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Time Series Analysis</h1>
-                    <p class="text-gray-600">ARIMA decomposition and forecasting</p>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-wave-square text-primary"></i>
-                            Time Series Setup
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Health Metric</label>
-                                <select id="timeseriesMetricSelect" class="form-select">
-                                    <option value="">Select a metric...</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <button onclick="analyzeTimeSeries()" class="btn btn-primary">
-                                    <i class="fas fa-chart-line"></i>
-                                    Analyze Time Series
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div id="timeseriesChart" class="chart-container"></div>
-                        <div id="decompositionChart" class="chart-container"></div>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- AI Predictions Section -->
-            <section id="predictions-section" class="content-section hidden">
-                <div class="mb-6">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">AI-Powered Predictions</h1>
-                    <p class="text-gray-600">Expected biomarker changes based on current trends</p>
-                </div>
-                
-                <div class="card mb-6">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-filter text-primary"></i>
-                            Prediction Filters
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Biomarker</label>
-                                <select id="deltaBiomarkerSelect" class="form-select" onchange="updatePredictionDisplay()">
-                                    <option value="">All biomarkers</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Time Horizon</label>
-                                <select id="deltaMonthsSelect" class="form-select" onchange="updatePredictionDisplay()">
-                                    <option value="">All timeframes</option>
-                                    <option value="3">3 months</option>
-                                    <option value="6">6 months</option>
-                                    <option value="12">12 months</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="deltaPredictions" class="prediction-grid"></div>
-            </section>
-            
-            <!-- Upload Section -->
-            <section id="upload-section" class="content-section hidden">
-                <div class="mb-6">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Data Upload</h1>
-                    <p class="text-gray-600">Import your health data from CSV files</p>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-upload text-primary"></i>
-                            Upload Health Data
-                        </div>
-                        <div class="card-subtitle">Expected columns: date, metric_name, value, unit</div>
-                    </div>
-                    <div class="card-content">
-                        <div class="upload-zone" onclick="document.getElementById('csvFile').click()">
-                            <div class="upload-icon">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                            </div>
-                            <div class="upload-text">Click to upload CSV file</div>
-                            <div class="upload-subtext">or drag and drop your file here</div>
-                        </div>
-                        <input type="file" id="csvFile" accept=".csv" style="display: none;" onchange="uploadCSV(this)">
-                    </div>
-                </div>
-            </section>
-            
+            </div>
+
             <!-- Supplements Section -->
-            <section id="supplements-section" class="content-section hidden">
-                <div class="mb-6">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Supplement Management</h1>
-                    <p class="text-gray-600">Track your supplement regimen and expected effects</p>
+            <div id="supplements" class="section">
+                <div class="page-header">
+                    <h1 class="page-title">Supplement Tracking</h1>
+                    <p class="page-subtitle">Monitor your supplement regimen and expected effects</p>
                 </div>
-                
-                <div class="card mb-6">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-plus-circle text-success"></i>
-                            Add New Supplement
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <form onsubmit="addSupplement(event)">
-                            <div class="form-row">
+
+                <div class="grid grid-cols-1">
+                    <div class="card">
+                        <h3 class="card-title">Add New Supplement</h3>
+                        <form id="supplement-form">
+                            <div class="grid grid-cols-2">
                                 <div class="form-group">
                                     <label class="form-label">Supplement Name</label>
-                                    <input type="text" id="supplementName" class="form-input" placeholder="e.g., Vitamin D3" required>
+                                    <input type="text" class="form-input" name="name" required>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Start Date</label>
-                                    <input type="date" id="supplementStartDate" class="form-input" required>
+                                    <input type="date" class="form-input" name="start_date" required>
                                 </div>
-                            </div>
-                            <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Dosage</label>
-                                    <input type="text" id="supplementDosage" class="form-input" placeholder="1000 IU daily">
+                                    <input type="text" class="form-input" name="dosage">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Expected Biomarkers</label>
-                                    <input type="text" id="expectedBiomarkers" class="form-input" placeholder="Vitamin D, Calcium">
+                                    <input type="text" class="form-input" name="expected_biomarkers" placeholder="e.g., Vitamin D, Cholesterol">
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Notes</label>
-                                <textarea id="supplementNotes" class="form-input" placeholder="Additional notes..." rows="3"></textarea>
+                                <textarea class="form-input" name="notes" rows="3"></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i>
-                                Add Supplement
-                            </button>
+                            <button type="submit" class="btn btn-primary">Add Supplement</button>
                         </form>
                     </div>
+
+                    <div class="card">
+                        <h3 class="card-title">Current Supplements</h3>
+                        <div id="supplements-table"></div>
+                    </div>
                 </div>
-                
+            </div>
+
+            <!-- RDD Analysis Section -->
+            <div id="rdd-analysis" class="section">
+                <div class="page-header">
+                    <h1 class="page-title">Regression Discontinuity Analysis</h1>
+                    <p class="page-subtitle">Measure causal effects of supplement interventions</p>
+                </div>
+
                 <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-pills text-primary"></i>
-                            Current Supplements
+                    <h3 class="card-title">Analyze Supplement Effect</h3>
+                    <form id="rdd-form">
+                        <div class="grid grid-cols-3">
+                            <div class="form-group">
+                                <label class="form-label">Health Metric</label>
+                                <select class="form-select" name="metric_name" required>
+                                    <option value="">Select metric...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Intervention Date</label>
+                                <input type="date" class="form-input" name="intervention_date" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Bandwidth (days)</label>
+                                <input type="number" class="form-input" name="bandwidth" value="30" min="7" max="90">
+                            </div>
                         </div>
-                        <div class="card-subtitle">
-                            <button onclick="populateSupplementBiomarkers()" class="btn btn-secondary">
-                                <i class="fas fa-robot"></i>
-                                Auto-populate Expected Biomarkers
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <div class="table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Start Date</th>
-                                        <th>Dosage</th>
-                                        <th>Expected Biomarkers</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="supplementTableBody">
-                                    <tr><td colspan="4" class="text-center text-gray-500">Loading supplement data...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                        <button type="submit" class="btn btn-primary">Run RDD Analysis</button>
+                    </form>
+                    <div id="rdd-results"></div>
                 </div>
-            </section>
-        </main>
+            </div>
+
+            <!-- Predictions Section -->
+            <div id="predictions" class="section">
+                <div class="page-header">
+                    <h1 class="page-title">Biomarker Predictions</h1>
+                    <p class="page-subtitle">AI-powered predictions for future biomarker changes</p>
+                </div>
+
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6);">
+                        <h3 class="card-title" style="margin-bottom: 0;">Stored Predictions</h3>
+                        <button class="btn btn-primary" onclick="loadStoredPredictions()">Refresh Predictions</button>
+                    </div>
+                    <div id="predictions-content"></div>
+                </div>
+            </div>
+
+            <!-- Upload Data Section -->
+            <div id="upload" class="section">
+                <div class="page-header">
+                    <h1 class="page-title">Upload Health Data</h1>
+                    <p class="page-subtitle">Import CSV files with your health metrics</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">CSV File Upload</h3>
+                    <div class="file-upload" id="file-upload">
+                        <div style="margin-bottom: var(--space-4);">
+                            <div style="font-size: 3rem; margin-bottom: var(--space-2);">📁</div>
+                            <div style="font-weight: 600; margin-bottom: var(--space-2);">Drop CSV files here or click to browse</div>
+                            <div style="color: var(--gray-500); font-size: 0.875rem;">Expected format: date, metric_name, value, unit</div>
+                        </div>
+                        <input type="file" id="csv-file" accept=".csv" style="display: none;" multiple>
+                    </div>
+                    <div id="upload-results"></div>
+                </div>
+            </div>
+
+            <!-- Health Metrics Section -->
+            <div id="health-metrics" class="section">
+                <div class="page-header">
+                    <h1 class="page-title">Health Metrics</h1>
+                    <p class="page-subtitle">View and analyze your continuous health monitoring data</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">Metrics Overview</h3>
+                    <div id="health-metrics-table"></div>
+                </div>
+            </div>
+        </div>
     </div>
-    
+
     <script>
-        // Global variables
-        let currentBiomarkerDates = {};
-        let uniqueHealthMetrics = [];
-        let supplementsList = [];
-        let biomarkersList = [];
-        let storedPredictions = [];
-        
-        // Navigation functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize navigation
-            initializeNavigation();
-            
-            // Load dashboard data
-            loadDashboardData();
-            
-            // Setup drag and drop for file upload
-            setupFileUpload();
-        });
-        
-        function initializeNavigation() {
-            const navItems = document.querySelectorAll('.nav-item');
-            const sections = document.querySelectorAll('.content-section');
-            
-            navItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    
-                    // Remove active class from all nav items
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    
-                    // Add active class to clicked item
-                    item.classList.add('active');
-                    
-                    // Hide all sections
-                    sections.forEach(section => section.classList.add('hidden'));
-                    
-                    // Show target section
-                    const targetSection = item.getAttribute('data-section') + '-section';
-                    const section = document.getElementById(targetSection);
-                    if (section) {
-                        section.classList.remove('hidden');
-                    }
-                });
+        // Global state
+        let currentData = {
+            biomarkers: [],
+            supplements: [],
+            healthMetrics: [],
+            uniqueMetrics: []
+        };
+
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
             });
+            
+            // Remove active class from nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Add active class to clicked nav item
+            event.target.classList.add('active');
+            
+            // Load section-specific data
+            loadSectionData(sectionId);
         }
-        
-        function setupFileUpload() {
-            const uploadZone = document.querySelector('.upload-zone');
-            
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                uploadZone.addEventListener(eventName, preventDefaults, false);
-            });
-            
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            
-            ['dragenter', 'dragover'].forEach(eventName => {
-                uploadZone.addEventListener(eventName, highlight, false);
-            });
-            
-            ['dragleave', 'drop'].forEach(eventName => {
-                uploadZone.addEventListener(eventName, unhighlight, false);
-            });
-            
-            function highlight(e) {
-                uploadZone.classList.add('dragover');
-            }
-            
-            function unhighlight(e) {
-                uploadZone.classList.remove('dragover');
-            }
-            
-            uploadZone.addEventListener('drop', handleDrop, false);
-            
-            function handleDrop(e) {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                
-                if (files.length > 0) {
-                    const fileInput = document.getElementById('csvFile');
-                    fileInput.files = files;
-                    uploadCSV(fileInput);
-                }
+
+        // Load data for specific sections
+        async function loadSectionData(sectionId) {
+            switch(sectionId) {
+                case 'overview':
+                    await loadOverviewData();
+                    break;
+                case 'biomarkers':
+                    await loadBiomarkers();
+                    break;
+                case 'supplements':
+                    await loadSupplements();
+                    break;
+                case 'rdd-analysis':
+                    await loadUniqueMetrics();
+                    break;
+                case 'predictions':
+                    await loadStoredPredictions();
+                    break;
+                case 'health-metrics':
+                    await loadHealthMetrics();
+                    break;
             }
         }
-        
-        async function loadDashboardData() {
+
+        // Initialize dashboard
+        async function initDashboard() {
             try {
-                showLoading();
-                
-                // Load all data in parallel
-                await Promise.all([
-                    loadBiomarkerDates(),
-                    loadUniqueMetrics(),
-                    loadSupplementsList(),
-                    loadInterventionDates(),
-                    loadBiomarkersList(),
-                    updateBiomarkerChart(),
-                    loadSupplementTable(),
-                    updateDashboardStats()
-                ]);
-                
-                hideLoading();
+                await loadOverviewData();
+                setupEventListeners();
             } catch (error) {
-                console.error('Failed to load dashboard data:', error);
-                hideLoading();
+                console.error('Failed to initialize dashboard:', error);
             }
         }
-        
-        function showLoading() {
-            // Add loading states to various components
-            const loadingHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
-            
-            const biomarkerChart = document.getElementById('biomarkerChart');
-            if (biomarkerChart) biomarkerChart.innerHTML = loadingHTML;
-        }
-        
-        function hideLoading() {
-            // Remove loading states - this will be handled by individual load functions
-        }
-        
-        async function updateDashboardStats() {
+
+        // Load overview data
+        async function loadOverviewData() {
             try {
+                // Load all data
                 const [biomarkers, supplements, healthMetrics] = await Promise.all([
                     fetch('/biomarkers').then(r => r.json()),
                     fetch('/supplements').then(r => r.json()),
                     fetch('/health-metrics').then(r => r.json())
                 ]);
+
+                currentData.biomarkers = biomarkers;
+                currentData.supplements = supplements;
+                currentData.healthMetrics = healthMetrics;
+
+                // Update stats
+                document.getElementById('biomarker-count').textContent = biomarkers.length;
+                document.getElementById('supplement-count').textContent = supplements.length;
+                document.getElementById('metric-count').textContent = healthMetrics.length;
                 
-                // Update stat cards
-                document.getElementById('totalBiomarkers').textContent = new Set(biomarkers.map(b => b.name)).size;
-                document.getElementById('activeSupplements').textContent = supplements.length;
-                document.getElementById('healthMetrics').textContent = healthMetrics.length;
-                document.getElementById('significantEffects').textContent = '2'; // This would come from RDD analysis
-                
+                // Calculate days tracked
+                if (healthMetrics.length > 0) {
+                    const dates = healthMetrics.map(m => new Date(m.measurement_date));
+                    const minDate = new Date(Math.min(...dates));
+                    const maxDate = new Date(Math.max(...dates));
+                    const daysDiff = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24));
+                    document.getElementById('days-tracked').textContent = daysDiff;
+                }
+
+                // Create charts
+                createBiomarkerTrendsChart(biomarkers);
+                createHealthMetricsChart(healthMetrics);
+
             } catch (error) {
-                console.error('Failed to update dashboard stats:', error);
+                console.error('Failed to load overview data:', error);
             }
         }
-        
-        // Keep all existing JavaScript functions but update them to work with new UI
-        async function loadBiomarkerDates() {
-            try {
-                const response = await fetch('/biomarkers/dates');
-                currentBiomarkerDates = await response.json();
-                
-                const selector = document.getElementById('biomarkerTestSelect');
-                selector.innerHTML = '<option value="latest">Latest Test</option>';
-                
-                const allDates = new Set();
-                Object.values(currentBiomarkerDates).forEach(dates => {
-                    dates.forEach(d => allDates.add(d.date));
-                });
-                
-                Array.from(allDates).sort().reverse().forEach(date => {
-                    const option = document.createElement('option');
-                    option.value = date;
-                    option.textContent = new Date(date).toLocaleDateString();
-                    selector.appendChild(option);
-                });
-                
-            } catch (error) {
-                console.error('Failed to load biomarker dates:', error);
-            }
+
+        // Create biomarker trends chart
+        function createBiomarkerTrendsChart(biomarkers) {
+            if (biomarkers.length === 0) return;
+
+            // Group by biomarker name
+            const biomarkerGroups = {};
+            biomarkers.forEach(b => {
+                if (!biomarkerGroups[b.name]) {
+                    biomarkerGroups[b.name] = [];
+                }
+                biomarkerGroups[b.name].push(b);
+            });
+
+            const traces = Object.keys(biomarkerGroups).slice(0, 5).map(name => {
+                const data = biomarkerGroups[name].sort((a, b) => new Date(a.test_date) - new Date(b.test_date));
+                return {
+                    x: data.map(d => d.test_date),
+                    y: data.map(d => d.value),
+                    name: name,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { width: 3 },
+                    marker: { size: 8 }
+                };
+            });
+
+            const layout = {
+                title: '',
+                font: { family: 'Inter, sans-serif' },
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Value' },
+                showlegend: true,
+                margin: { t: 20, r: 20, b: 60, l: 60 }
+            };
+
+            Plotly.newPlot('biomarker-trends-chart', traces, layout, {responsive: true});
         }
-        
-        async function loadUniqueMetrics() {
-            try {
-                const response = await fetch('/health-metrics/unique');
-                uniqueHealthMetrics = await response.json();
-                
-                const rddSelector = document.getElementById('rddMetricSelect');
-                const timeseriesSelector = document.getElementById('timeseriesMetricSelect');
-                
-                [rddSelector, timeseriesSelector].forEach(selector => {
-                    selector.innerHTML = '<option value="">Select a metric...</option>';
-                    uniqueHealthMetrics.forEach(metric => {
-                        const option = document.createElement('option');
-                        option.value = metric.name;
-                        option.textContent = `${metric.name} (${metric.data_points} points)`;
-                        selector.appendChild(option);
-                    });
-                });
-                
-            } catch (error) {
-                console.error('Failed to load unique metrics:', error);
-            }
+
+        // Create health metrics chart
+        function createHealthMetricsChart(healthMetrics) {
+            if (healthMetrics.length === 0) return;
+
+            // Get unique metrics and show top 3
+            const metricGroups = {};
+            healthMetrics.forEach(m => {
+                if (!metricGroups[m.metric_name]) {
+                    metricGroups[m.metric_name] = [];
+                }
+                metricGroups[m.metric_name].push(m);
+            });
+
+            const traces = Object.keys(metricGroups).slice(0, 3).map(name => {
+                const data = metricGroups[name].sort((a, b) => new Date(a.measurement_date) - new Date(b.measurement_date));
+                return {
+                    x: data.map(d => d.measurement_date),
+                    y: data.map(d => d.value),
+                    name: name.replace('_', ' ').toUpperCase(),
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { width: 2 }
+                };
+            });
+
+            const layout = {
+                title: '',
+                font: { family: 'Inter, sans-serif' },
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Value' },
+                showlegend: true,
+                margin: { t: 20, r: 20, b: 60, l: 60 }
+            };
+
+            Plotly.newPlot('health-metrics-chart', traces, layout, {responsive: true});
         }
-        
-        async function loadSupplementsList() {
+
+        // Load biomarkers
+        async function loadBiomarkers() {
             try {
-                const response = await fetch('/supplements');
-                supplementsList = await response.json();
-            } catch (error) {
-                console.error('Failed to load supplements:', error);
-            }
-        }
-        
-        async function loadInterventionDates() {
-            try {
-                const response = await fetch('/supplements');
-                const supplements = await response.json();
-                
-                const uniqueDates = [...new Set(supplements.map(s => s.start_date))].sort();
-                
-                const selector = document.getElementById('rddInterventionSelect');
-                selector.innerHTML = '<option value="">Select intervention date...</option>';
-                
-                uniqueDates.forEach(date => {
-                    const option = document.createElement('option');
-                    option.value = date;
-                    option.textContent = date;
-                    selector.appendChild(option);
-                });
-                
-            } catch (error) {
-                console.error('Failed to load intervention dates:', error);
-            }
-        }
-        
-        async function loadBiomarkersList() {
-            try {
-                const response = await fetch('/biomarkers');
-                biomarkersList = await response.json();
-                
-                const uniqueNames = [...new Set(biomarkersList.map(b => b.name))];
-                const selector = document.getElementById('deltaBiomarkerSelect');
-                selector.innerHTML = '<option value="">All biomarkers</option>';
-                
-                uniqueNames.forEach(name => {
-                    const option = document.createElement('option');
-                    option.value = name;
-                    option.textContent = name;
-                    selector.appendChild(option);
-                });
-                
-                await loadStoredPredictions();
-                
+                const biomarkers = await fetch('/biomarkers').then(r => r.json());
+                displayBiomarkersTable(biomarkers);
             } catch (error) {
                 console.error('Failed to load biomarkers:', error);
             }
         }
-        
-        async function updateBiomarkerChart() {
+
+        // Display biomarkers table
+        function displayBiomarkersTable(biomarkers) {
+            const container = document.getElementById('biomarkers-table');
+            
+            if (biomarkers.length === 0) {
+                container.innerHTML = '<p style="color: var(--gray-500); text-align: center; padding: var(--space-8);">No biomarkers found. Add your first biomarker above.</p>';
+                return;
+            }
+
+            const table = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Value</th>
+                            <th>Unit</th>
+                            <th>Test Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${biomarkers.map(b => `
+                            <tr>
+                                <td style="font-weight: 500;">${b.name}</td>
+                                <td>${b.value}</td>
+                                <td>${b.unit || '-'}</td>
+                                <td>${new Date(b.test_date).toLocaleDateString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = table;
+        }
+
+        // Load supplements
+        async function loadSupplements() {
             try {
-                const response = await fetch('/biomarkers');
-                const biomarkers = await response.json();
-                
-                if (biomarkers.length === 0) {
-                    document.getElementById('biomarkerChart').innerHTML = '<div class="text-center text-gray-500 py-12">No biomarker data available</div>';
-                    return;
-                }
-                
-                const selectedDate = document.getElementById('biomarkerTestSelect').value;
-                let filteredBiomarkers = biomarkers;
-                
-                if (selectedDate !== 'latest') {
-                    filteredBiomarkers = biomarkers.filter(b => b.test_date === selectedDate);
-                } else {
-                    const latest = {};
-                    biomarkers.forEach(item => {
-                        const biomarker = item.name;
-                        if (!latest[biomarker] || item.test_date > latest[biomarker].test_date) {
-                            latest[biomarker] = item;
-                        }
-                    });
-                    filteredBiomarkers = Object.values(latest);
-                }
-                
-                const sortedBiomarkers = filteredBiomarkers.sort((a, b) => b.value - a.value);
-                const names = sortedBiomarkers.map(b => b.name);
-                const values = sortedBiomarkers.map(b => b.value);
-                
-                const trace = {
-                    x: values,
-                    y: names,
-                    type: 'bar',
-                    orientation: 'h',
-                    marker: {
-                        color: values,
-                        colorscale: 'Viridis',
-                        showscale: true,
-                        colorbar: {
-                            title: 'Values',
-                            titlefont: { size: 14 }
-                        }
-                    },
-                    hovertemplate: '<b>%{y}</b><br>Value: %{x}<br><extra></extra>'
-                };
-                
-                const layout = {
-                    title: {
-                        text: 'Biomarker Values (Latest Results)',
-                        font: { size: 18, family: 'Inter' }
-                    },
-                    xaxis: { 
-                        title: 'Values',
-                        titlefont: { size: 14 }
-                    },
-                    yaxis: { 
-                        title: '',
-                        titlefont: { size: 14 }
-                    },
-                    margin: { l: 150, r: 60, t: 60, b: 60 },
-                    font: { family: 'Inter' },
-                    plot_bgcolor: 'rgba(0,0,0,0)',
-                    paper_bgcolor: 'rgba(0,0,0,0)'
-                };
-                
-                Plotly.newPlot('biomarkerChart', [trace], layout, {responsive: true});
-                
+                const supplements = await fetch('/supplements').then(r => r.json());
+                displaySupplementsTable(supplements);
             } catch (error) {
-                console.error('Failed to update biomarker chart:', error);
-                document.getElementById('biomarkerChart').innerHTML = '<div class="text-center text-error py-12">Failed to load biomarker data</div>';
+                console.error('Failed to load supplements:', error);
             }
         }
-        
-        async function loadSupplementTable() {
+
+        // Display supplements table
+        function displaySupplementsTable(supplements) {
+            const container = document.getElementById('supplements-table');
+            
+            if (supplements.length === 0) {
+                container.innerHTML = '<p style="color: var(--gray-500); text-align: center; padding: var(--space-8);">No supplements found. Add your first supplement above.</p>';
+                return;
+            }
+
+            const table = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Start Date</th>
+                            <th>Dosage</th>
+                            <th>Expected Biomarkers</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${supplements.map(s => `
+                            <tr>
+                                <td style="font-weight: 500;">${s.name}</td>
+                                <td>${new Date(s.start_date).toLocaleDateString()}</td>
+                                <td>${s.dosage || '-'}</td>
+                                <td>${s.expected_biomarkers || '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = table;
+        }
+
+        // Load unique metrics for RDD analysis
+        async function loadUniqueMetrics() {
             try {
-                const response = await fetch('/supplements');
-                const supplements = await response.json();
+                const metrics = await fetch('/health-metrics/unique').then(r => r.json());
+                currentData.uniqueMetrics = metrics;
                 
-                const tableBody = document.getElementById('supplementTableBody');
-                
-                if (supplements.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500">No supplement data available</td></tr>';
-                    return;
-                }
-                
-                tableBody.innerHTML = supplements.map(supplement => `
-                    <tr>
-                        <td class="font-medium">${supplement.name}</td>
-                        <td>${new Date(supplement.start_date).toLocaleDateString()}</td>
-                        <td>${supplement.dosage || '<span class="text-gray-400">Not specified</span>'}</td>
-                        <td>${supplement.expected_biomarkers || '<span class="text-gray-400">None specified</span>'}</td>
-                    </tr>
-                `).join('');
-                
+                const select = document.querySelector('#rdd-form select[name="metric_name"]');
+                select.innerHTML = '<option value="">Select metric...</option>' + 
+                    metrics.map(m => `<option value="${m.name}">${m.name.replace('_', ' ').toUpperCase()} (${m.data_points} points)</option>`).join('');
             } catch (error) {
-                console.error('Failed to load supplement table:', error);
+                console.error('Failed to load unique metrics:', error);
             }
         }
-        
+
+        // Load stored predictions
         async function loadStoredPredictions() {
             try {
-                const response = await fetch('/ai/stored-predictions');
-                storedPredictions = await response.json();
-                
-                console.log(`Loaded ${storedPredictions.length} stored predictions`);
-                updatePredictionDisplay();
-                
+                const predictions = await fetch('/ai/stored-predictions').then(r => r.json());
+                displayPredictions(predictions);
             } catch (error) {
-                console.error('Failed to load stored predictions:', error);
-                document.getElementById('deltaPredictions').innerHTML = '<div class="text-center text-gray-500 py-12">Predictions are being generated. Please refresh the page in a few minutes.</div>';
+                console.error('Failed to load predictions:', error);
+                document.getElementById('predictions-content').innerHTML = '<p style="color: var(--error-500);">Failed to load predictions</p>';
             }
         }
-        
-        function updatePredictionDisplay() {
-            const selectedBiomarker = document.getElementById('deltaBiomarkerSelect').value;
-            const selectedMonths = document.getElementById('deltaMonthsSelect').value;
-            
-            let filteredPredictions = storedPredictions;
-            
-            if (selectedBiomarker) {
-                filteredPredictions = filteredPredictions.filter(p => p.biomarker_name === selectedBiomarker);
-            }
-            
-            if (selectedMonths) {
-                filteredPredictions = filteredPredictions.filter(p => p.months_ahead == selectedMonths);
-            }
-            
-            displayPredictions(filteredPredictions);
-        }
-        
+
+        // Display predictions
         function displayPredictions(predictions) {
-            const container = document.getElementById('deltaPredictions');
+            const container = document.getElementById('predictions-content');
             
             if (predictions.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-500 py-12">No predictions available for the selected filters.</div>';
+                container.innerHTML = '<p style="color: var(--gray-500); text-align: center; padding: var(--space-8);">No predictions available. Click "Refresh Predictions" to generate new ones.</p>';
                 return;
             }
-            
-            let html = '';
-            predictions.forEach(prediction => {
-                html += createPredictionCardHTML(prediction);
+
+            // Group by biomarker
+            const grouped = {};
+            predictions.forEach(p => {
+                if (!grouped[p.biomarker_name]) {
+                    grouped[p.biomarker_name] = [];
+                }
+                grouped[p.biomarker_name].push(p);
             });
-            
-            container.innerHTML = html;
-        }
-        
-        function createPredictionCardHTML(prediction) {
-            const isImprovement = prediction.is_improvement;
-            const delta = prediction.predicted_delta;
-            const cardClass = isImprovement ? 'improvement' : (Math.abs(delta) < 0.1 ? 'neutral' : 'decline');
-            
-            const deltaText = delta > 0 ? `+${delta}` : `${delta}`;
-            const improvementIcon = isImprovement ? '✅' : '⚠️';
-            const improvementText = isImprovement ? 'Expected Improvement' : 'Monitor Closely';
-            
-            return `
-                <div class="prediction-card ${cardClass}">
-                    <div class="prediction-header">
-                        <h4>${prediction.biomarker_name}</h4>
-                        <span class="time-horizon">${prediction.months_ahead} months</span>
-                    </div>
-                    <div class="delta-info">
-                        <span class="delta-value">${deltaText}</span>
-                        <span class="improvement-indicator">${improvementIcon} ${improvementText}</span>
-                    </div>
-                    <div class="prediction-details">
-                        <p><strong>Current:</strong> ${prediction.current_value}</p>
-                        <p><strong>Predicted:</strong> ${prediction.predicted_value}</p>
-                        <p><strong>Confidence:</strong> ${Math.round(prediction.confidence * 100)}%</p>
-                        <p><strong>Method:</strong> ${prediction.analysis_method}</p>
-                    </div>
-                    <div class="reasoning">
-                        <p>${prediction.reasoning}</p>
-                    </div>
-                    <div class="recommendation">
-                        <p><strong>Recommendation:</strong> ${prediction.recommendation}</p>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Keep all existing functions but update error handling and UI feedback
-        async function uploadCSV(input) {
-            const file = input.files[0];
-            if (!file) return;
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            try {
-                // Show loading state
-                const uploadZone = document.querySelector('.upload-zone');
-                const originalHTML = uploadZone.innerHTML;
-                uploadZone.innerHTML = '<div class="loading"><div class="spinner"></div>Uploading...</div>';
+
+            const html = Object.keys(grouped).map(biomarker => {
+                const biomarkerPredictions = grouped[biomarker].sort((a, b) => a.months_ahead - b.months_ahead);
                 
-                const response = await fetch('/upload-csv', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    // Show success message
-                    uploadZone.innerHTML = '<div class="text-center text-success py-8"><i class="fas fa-check-circle text-4xl mb-4"></i><div class="text-lg font-medium">Upload Successful!</div><div class="text-sm text-gray-600">' + result.message + '</div></div>';
-                    
-                    // Refresh dashboard data
-                    setTimeout(() => {
-                        uploadZone.innerHTML = originalHTML;
-                        loadDashboardData();
-                    }, 3000);
-                } else {
-                    throw new Error(result.detail || 'Upload failed');
-                }
-            } catch (error) {
-                // Show error message
-                const uploadZone = document.querySelector('.upload-zone');
-                uploadZone.innerHTML = '<div class="text-center text-error py-8"><i class="fas fa-exclamation-triangle text-4xl mb-4"></i><div class="text-lg font-medium">Upload Failed</div><div class="text-sm text-gray-600">' + error.message + '</div></div>';
-                
-                setTimeout(() => {
-                    location.reload(); // Reset the upload zone
-                }, 3000);
-            }
-        }
-        
-        async function addBiomarker(event) {
-            event.preventDefault();
-            
-            const biomarker = {
-                name: document.getElementById('biomarkerName').value,
-                value: parseFloat(document.getElementById('biomarkerValue').value),
-                unit: document.getElementById('biomarkerUnit').value,
-                test_date: document.getElementById('testDate').value
-            };
-            
-            try {
-                const response = await fetch('/biomarkers', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(biomarker)
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    // Show success feedback
-                    showNotification('Biomarker added successfully!', 'success');
-                    event.target.reset();
-                    loadDashboardData();
-                } else {
-                    throw new Error(result.detail || 'Failed to add biomarker');
-                }
-            } catch (error) {
-                showNotification('Failed to add biomarker: ' + error.message, 'error');
-            }
-        }
-        
-        async function addSupplement(event) {
-            event.preventDefault();
-            
-            const supplement = {
-                name: document.getElementById('supplementName').value,
-                start_date: document.getElementById('supplementStartDate').value,
-                dosage: document.getElementById('supplementDosage').value,
-                expected_biomarkers: document.getElementById('expectedBiomarkers').value,
-                notes: document.getElementById('supplementNotes').value
-            };
-            
-            try {
-                const response = await fetch('/supplements', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(supplement)
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    showNotification('Supplement added successfully!', 'success');
-                    event.target.reset();
-                    loadDashboardData();
-                } else {
-                    throw new Error(result.detail || 'Failed to add supplement');
-                }
-            } catch (error) {
-                showNotification('Failed to add supplement: ' + error.message, 'error');
-            }
-        }
-        
-        function showNotification(message, type = 'info') {
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 16px 24px;
-                border-radius: 8px;
-                color: white;
-                font-weight: 500;
-                z-index: 1000;
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-            `;
-            
-            // Set background color based on type
-            const colors = {
-                success: 'var(--success-600)',
-                error: 'var(--error-600)',
-                info: 'var(--primary-600)',
-                warning: 'var(--warning-600)'
-            };
-            notification.style.backgroundColor = colors[type] || colors.info;
-            
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            // Animate in
-            setTimeout(() => {
-                notification.style.transform = 'translateX(0)';
-            }, 100);
-            
-            // Remove after 5 seconds
-            setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    document.body.removeChild(notification);
-                }, 300);
-            }, 5000);
-        }
-        
-        // Keep all other existing functions (RDD analysis, time series, etc.) 
-        // but update them to use the new notification system and loading states
-        
-        async function populateSupplementBiomarkers() {
-            try {
-                const button = event.target;
-                const originalText = button.innerHTML;
-                button.disabled = true;
-                button.innerHTML = '<div class="spinner" style="width: 16px; height: 16px; margin-right: 8px;"></div>Populating...';
-                
-                const response = await fetch('/populate-supplement-biomarkers', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'}
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    showNotification(result.message || 'Successfully populated expected biomarkers!', 'success');
-                    await loadSupplementTable();
-                } else {
-                    throw new Error(result.error || result.detail || 'Failed to populate biomarkers');
-                }
-                
-            } catch (error) {
-                console.error('Failed to populate supplement biomarkers:', error);
-                showNotification('Failed to populate biomarkers: ' + error.message, 'error');
-            } finally {
-                const button = document.querySelector('button[onclick="populateSupplementBiomarkers()"]');
-                if (button) {
-                    button.disabled = false;
-                    button.innerHTML = '<i class="fas fa-robot"></i> Auto-populate Expected Biomarkers';
-                }
-            }
-        }
-        
-        // Add the remaining functions (RDD analysis, time series, etc.) with updated styling
-        async function analyzeRDDWithPlots() {
-            const metric = document.getElementById('rddMetricSelect').value;
-            const interventionDate = document.getElementById('rddInterventionSelect').value;
-            
-            if (!metric || !interventionDate) {
-                showNotification('Please select both a metric and an intervention date', 'warning');
-                return;
-            }
-            
-            try {
-                // Show loading state
-                document.getElementById('rddResults').innerHTML = '<div class="loading"><div class="spinner"></div>Analyzing...</div>';
-                document.getElementById('rddPlotChart').innerHTML = '<div class="loading"><div class="spinner"></div>Generating plots...</div>';
-                
-                const response = await fetch(`/rdd/plot/${encodeURIComponent(metric)}/${encodeURIComponent(interventionDate)}`);
-                const result = await response.json();
-                
-                if (result.error) {
-                    document.getElementById('rddResults').innerHTML = `<div class="text-center text-error py-8">${result.error}</div>`;
-                    return;
-                }
-                
-                displayRDDResults(result.effect_analysis, metric);
-                createRDDPlot(result.plot_data);
-                
-            } catch (error) {
-                console.error('RDD analysis failed:', error);
-                document.getElementById('rddResults').innerHTML = '<div class="text-center text-error py-8">Analysis failed. Please try again.</div>';
-                showNotification('RDD analysis failed: ' + error.message, 'error');
-            }
-        }
-        
-        function displayRDDResults(result, metric) {
-            let html = `<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-chart-line text-primary"></i>Analysis Results for ${metric.replace('_', ' ').toUpperCase()}</div></div><div class="card-content">`;
-            
-            if (result.treatment_effect !== undefined) {
-                const effectColor = result.statistically_significant ? 'var(--success-600)' : 'var(--gray-500)';
-                const effectText = result.statistically_significant ? 'Statistically Significant' : 'Not Significant';
-                const effectIcon = result.statistically_significant ? 'fas fa-check-circle' : 'fas fa-info-circle';
-                
-                html += `
-                    <div class="stat-card" style="border-left-color: ${effectColor};">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <i class="${effectIcon}" style="color: ${effectColor}; font-size: 24px;"></i>
-                            <h3 style="color: ${effectColor}; margin: 0;">${effectText}</h3>
+                return `
+                    <div class="prediction-card">
+                        <h4 style="font-weight: 600; margin-bottom: var(--space-4); color: var(--gray-900);">${biomarker}</h4>
+                        <div class="grid grid-cols-3">
+                            ${biomarkerPredictions.map(p => `
+                                <div style="text-align: center; padding: var(--space-4); border: 1px solid var(--gray-200); border-radius: 8px;">
+                                    <div style="font-size: 0.875rem; color: var(--gray-600); margin-bottom: var(--space-2);">${p.months_ahead} Months</div>
+                                    <div class="prediction-delta ${p.predicted_delta >= 0 ? 'positive' : 'negative'}" style="font-size: 1.25rem; font-weight: 700; margin-bottom: var(--space-1);">
+                                        ${p.predicted_delta >= 0 ? '+' : ''}${p.predicted_delta.toFixed(2)}
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: var(--gray-500);">
+                                        ${(p.confidence * 100).toFixed(0)}% confidence
+                                    </div>
+                                    ${p.is_improvement ? '<div style="color: var(--success-600); font-size: 0.75rem; margin-top: var(--space-1);">✓ Improvement</div>' : ''}
+                                </div>
+                            `).join('')}
                         </div>
-                        <div class="form-row" style="margin-bottom: 0;">
-                            <div>
-                                <div class="stat-value" style="font-size: 1.5rem;">${result.treatment_effect.toFixed(3)}</div>
-                                <div class="stat-label">Treatment Effect</div>
-                            </div>
-                            <div>
-                                <div class="stat-value" style="font-size: 1.5rem;">${result.treatment_p_value.toFixed(4)}</div>
-                                <div class="stat-label">P-value</div>
-                            </div>
-                            <div>
-                                <div class="stat-value" style="font-size: 1.5rem;">${result.bandwidth_days}</div>
-                                <div class="stat-label">Bandwidth (days)</div>
-                            </div>
-                            <div>
-                                <div class="stat-value" style="font-size: 1.5rem;">${result.n_observations}</div>
-                                <div class="stat-label">Data Points</div>
+                        <div style="margin-top: var(--space-4); padding: var(--space-4); background-color: var(--gray-50); border-radius: 8px;">
+                            <div style="font-size: 0.875rem; color: var(--gray-700); line-height: 1.5;">
+                                <strong>Reasoning:</strong> ${biomarkerPredictions[0].reasoning}
                             </div>
                         </div>
                     </div>
                 `;
-            } else {
-                html += '<div class="text-center text-gray-500 py-8">No effect could be estimated. Try adjusting the bandwidth or check if you have enough data points.</div>';
-            }
-            
-            html += '</div></div>';
-            document.getElementById('rddResults').innerHTML = html;
+            }).join('');
+
+            container.innerHTML = html;
         }
-        
-        function createRDDPlot(plotData) {
-            if (plotData.error) {
-                document.getElementById('rddPlotChart').innerHTML = `<div class="text-center text-error py-8">${plotData.error}</div>`;
+
+        // Load health metrics
+        async function loadHealthMetrics() {
+            try {
+                const metrics = await fetch('/health-metrics').then(r => r.json());
+                displayHealthMetricsTable(metrics);
+            } catch (error) {
+                console.error('Failed to load health metrics:', error);
+            }
+        }
+
+        // Display health metrics table
+        function displayHealthMetricsTable(metrics) {
+            const container = document.getElementById('health-metrics-table');
+            
+            if (metrics.length === 0) {
+                container.innerHTML = '<p style="color: var(--gray-500); text-align: center; padding: var(--space-8);">No health metrics found. Upload CSV data to get started.</p>';
                 return;
             }
+
+            // Show recent 50 entries
+            const recentMetrics = metrics.slice(-50).reverse();
             
-            const traces = [];
+            const table = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                            <th>Unit</th>
+                            <th>Date</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${recentMetrics.map(m => `
+                            <tr>
+                                <td style="font-weight: 500;">${m.metric_name.replace('_', ' ').toUpperCase()}</td>
+                                <td>${m.value}</td>
+                                <td>${m.unit || '-'}</td>
+                                <td>${new Date(m.measurement_date).toLocaleDateString()}</td>
+                                <td style="font-size: 0.875rem; color: var(--gray-600);">${m.source || '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
             
-            if (plotData.scatter) {
-                const beforeX = plotData.scatter.x_all.filter((x, i) => plotData.scatter.treatment[i] === 0);
-                const beforeY = plotData.scatter.y_all.filter((x, i) => plotData.scatter.treatment[i] === 0);
-                
-                traces.push({
-                    x: beforeX,
-                    y: beforeY,
-                    mode: 'markers',
-                    type: 'scatter',
-                    name: 'Before Treatment',
-                    marker: { color: 'var(--primary-500)', size: 8, opacity: 0.7 }
-                });
-                
-                const afterX = plotData.scatter.x_all.filter((x, i) => plotData.scatter.treatment[i] === 1);
-                const afterY = plotData.scatter.y_all.filter((x, i) => plotData.scatter.treatment[i] === 1);
-                
-                traces.push({
-                    x: afterX,
-                    y: afterY,
-                    mode: 'markers',
-                    type: 'scatter',
-                    name: 'After Treatment',
-                    marker: { color: 'var(--success-500)', size: 8, opacity: 0.7 }
-                });
-            }
-            
-            if (plotData.before_line) {
-                traces.push({
-                    x: plotData.before_line.x,
-                    y: plotData.before_line.y,
-                    mode: 'lines',
-                    type: 'scatter',
-                    name: 'Before Trend',
-                    line: { color: 'var(--primary-600)', width: 3 }
-                });
-            }
-            
-            if (plotData.after_line) {
-                traces.push({
-                    x: plotData.after_line.x,
-                    y: plotData.after_line.y,
-                    mode: 'lines',
-                    type: 'scatter',
-                    name: 'After Trend',
-                    line: { color: 'var(--success-600)', width: 3 }
-                });
-            }
-            
-            traces.push({
-                x: [plotData.cutoff, plotData.cutoff],
-                y: [Math.min(...plotData.scatter.y_all) * 0.9, Math.max(...plotData.scatter.y_all) * 1.1],
-                mode: 'lines',
-                type: 'scatter',
-                name: 'Treatment Start',
-                line: { color: 'var(--gray-600)', width: 2, dash: 'dash' }
-            });
-            
-            const layout = {
-                title: {
-                    text: `Regression Discontinuity Analysis<br><sub>Treatment Effect: ${plotData.treatment_effect.toFixed(3)}</sub>`,
-                    font: { size: 18, family: 'Inter' }
-                },
-                xaxis: { 
-                    title: 'Days Relative to Treatment Start',
-                    titlefont: { size: 14 }
-                },
-                yaxis: { 
-                    title: 'Metric Value',
-                    titlefont: { size: 14 }
-                },
-                font: { family: 'Inter' },
-                plot_bgcolor: 'rgba(0,0,0,0)',
-                paper_bgcolor: 'rgba(0,0,0,0)'
-            };
-            
-            Plotly.newPlot('rddPlotChart', traces, layout, {responsive: true});
+            container.innerHTML = table;
         }
-        
-        async function analyzeTimeSeries() {
-            const metric = document.getElementById('timeseriesMetricSelect').value;
+
+        // Generate insights
+        async function generateInsights() {
+            const button = event.target;
+            const content = document.getElementById('insights-content');
+            const results = document.getElementById('insights-results');
             
-            if (!metric) {
-                showNotification('Please select a metric', 'warning');
-                return;
-            }
+            button.disabled = true;
+            button.textContent = 'Generating...';
+            content.style.display = 'flex';
+            results.innerHTML = '';
             
             try {
-                document.getElementById('timeseriesChart').innerHTML = '<div class="loading"><div class="spinner"></div>Analyzing time series...</div>';
-                document.getElementById('decompositionChart').innerHTML = '<div class="loading"><div class="spinner"></div>Generating decomposition...</div>';
+                const response = await fetch('/generate-insights', { method: 'POST' });
+                const data = await response.json();
                 
-                const response = await fetch(`/metrics/decompose/${encodeURIComponent(metric)}`);
-                const result = await response.json();
+                content.style.display = 'none';
                 
-                if (result.error) {
-                    document.getElementById('timeseriesChart').innerHTML = `<div class="text-center text-error py-8">${result.error}</div>`;
-                    return;
-                }
-                
-                createTimeSeriesPlot(result);
-                
-                if (result.decomposition && !result.decomposition.error) {
-                    createDecompositionPlot(result);
+                if (data.insights) {
+                    results.innerHTML = `
+                        <div style="margin-top: var(--space-6);">
+                            <h4 style="font-weight: 600; margin-bottom: var(--space-4);">Health Insights</h4>
+                            <div class="grid grid-cols-1" style="gap: var(--space-4);">
+                                <div style="padding: var(--space-4); background-color: var(--primary-50); border-radius: 8px; border-left: 4px solid var(--primary-500);">
+                                    <strong>Overall Trend:</strong> ${data.insights.overall_health_trend}
+                                </div>
+                                <div style="padding: var(--space-4); background-color: var(--gray-50); border-radius: 8px;">
+                                    <strong>Key Insights:</strong>
+                                    <ul style="margin-top: var(--space-2); padding-left: var(--space-4);">
+                                        ${data.insights.key_insights.map(insight => `<li>${insight}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                <div style="padding: var(--space-4); background-color: var(--success-50); border-radius: 8px;">
+                                    <strong>Recommendations:</strong>
+                                    <ul style="margin-top: var(--space-2); padding-left: var(--space-4);">
+                                        ${data.insights.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `;
                 } else {
-                    document.getElementById('decompositionChart').innerHTML = '<div class="text-center text-gray-500 py-8">Decomposition not available - need more data points</div>';
+                    results.innerHTML = '<p style="color: var(--error-500);">Failed to generate insights</p>';
                 }
-                
             } catch (error) {
-                console.error('Time series analysis failed:', error);
-                document.getElementById('timeseriesChart').innerHTML = '<div class="text-center text-error py-8">Analysis failed. Please try again.</div>';
-                showNotification('Time series analysis failed: ' + error.message, 'error');
+                content.style.display = 'none';
+                results.innerHTML = '<p style="color: var(--error-500);">Error generating insights</p>';
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Generate New Insights';
             }
         }
-        
-        function createTimeSeriesPlot(data) {
-            const traces = [];
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Biomarker form
+            document.getElementById('biomarker-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData);
+                
+                try {
+                    const response = await fetch('/biomarkers', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    if (response.ok) {
+                        e.target.reset();
+                        await loadBiomarkers();
+                        showToast('Biomarker added successfully', 'success');
+                    } else {
+                        showToast('Failed to add biomarker', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error adding biomarker', 'error');
+                }
+            });
+
+            // Supplement form
+            document.getElementById('supplement-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData);
+                
+                try {
+                    const response = await fetch('/supplements', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    if (response.ok) {
+                        e.target.reset();
+                        await loadSupplements();
+                        showToast('Supplement added successfully', 'success');
+                    } else {
+                        showToast('Failed to add supplement', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error adding supplement', 'error');
+                }
+            });
+
+            // RDD form
+            document.getElementById('rdd-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData);
+                
+                const results = document.getElementById('rdd-results');
+                results.innerHTML = '<div class="loading"><div class="spinner"></div>Running analysis...</div>';
+                
+                try {
+                    const response = await fetch(`/rdd/plot/${data.metric_name}/${data.intervention_date}?bandwidth=${data.bandwidth}`);
+                    const result = await response.json();
+                    
+                    if (result.effect_analysis && !result.effect_analysis.error) {
+                        const effect = result.effect_analysis;
+                        results.innerHTML = `
+                            <div style="margin-top: var(--space-6);">
+                                <h4 style="font-weight: 600; margin-bottom: var(--space-4);">RDD Analysis Results</h4>
+                                <div class="grid grid-cols-2" style="gap: var(--space-4);">
+                                    <div style="padding: var(--space-4); background-color: var(--gray-50); border-radius: 8px;">
+                                        <div style="font-weight: 600; margin-bottom: var(--space-2);">Treatment Effect</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700; color: ${effect.treatment_effect >= 0 ? 'var(--success-600)' : 'var(--error-600)'};">
+                                            ${effect.treatment_effect >= 0 ? '+' : ''}${effect.treatment_effect.toFixed(3)}
+                                        </div>
+                                        <div style="font-size: 0.875rem; color: var(--gray-600);">
+                                            ${effect.statistically_significant ? '✓ Statistically significant' : '✗ Not significant'}
+                                        </div>
+                                    </div>
+                                    <div style="padding: var(--space-4); background-color: var(--gray-50); border-radius: 8px;">
+                                        <div style="font-weight: 600; margin-bottom: var(--space-2);">P-value</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700;">
+                                            ${effect.treatment_p_value ? effect.treatment_p_value.toFixed(4) : 'N/A'}
+                                        </div>
+                                        <div style="font-size: 0.875rem; color: var(--gray-600);">
+                                            R² = ${effect.r_squared.toFixed(3)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        results.innerHTML = '<p style="color: var(--error-500);">Analysis failed or insufficient data</p>';
+                    }
+                } catch (error) {
+                    results.innerHTML = '<p style="color: var(--error-500);">Error running analysis</p>';
+                }
+            });
+
+            // File upload
+            const fileUpload = document.getElementById('file-upload');
+            const fileInput = document.getElementById('csv-file');
             
-            traces.push({
-                x: data.original.dates,
-                y: data.original.values,
-                type: 'bar',
-                name: 'Original Data',
-                marker: { color: 'var(--primary-500)' }
+            fileUpload.addEventListener('click', () => fileInput.click());
+            fileUpload.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileUpload.classList.add('dragover');
+            });
+            fileUpload.addEventListener('dragleave', () => {
+                fileUpload.classList.remove('dragover');
+            });
+            fileUpload.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileUpload.classList.remove('dragover');
+                handleFileUpload(e.dataTransfer.files);
             });
             
-            if (data.forecast) {
-                traces.push({
-                    x: data.forecast.dates,
-                    y: data.forecast.predicted,
-                    mode: 'lines',
-                    type: 'scatter',
-                    name: 'Forecast',
-                    line: { color: 'var(--success-500)', dash: 'dash', width: 3 }
-                });
+            fileInput.addEventListener('change', (e) => {
+                handleFileUpload(e.target.files);
+            });
+        }
+
+        // Handle file upload
+        async function handleFileUpload(files) {
+            const results = document.getElementById('upload-results');
+            results.innerHTML = '';
+            
+            for (const file of files) {
+                if (!file.name.endsWith('.csv')) {
+                    showToast(`${file.name} is not a CSV file`, 'error');
+                    continue;
+                }
                 
-                if (data.forecast.lower_ci) {
-                    traces.push({
-                        x: data.forecast.dates.concat(data.forecast.dates.slice().reverse()),
-                        y: data.forecast.lower_ci.concat(data.forecast.upper_ci.slice().reverse()),
-                        fill: 'toself',
-                        fillcolor: 'rgba(16, 185, 129, 0.2)',
-                        line: { color: 'transparent' },
-                        name: 'Forecast CI',
-                        showlegend: false
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    const response = await fetch('/upload-csv', {
+                        method: 'POST',
+                        body: formData
                     });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        showToast(`${file.name} uploaded successfully`, 'success');
+                        results.innerHTML += `<div style="color: var(--success-600); margin-top: var(--space-2);">✓ ${file.name}: ${result.message}</div>`;
+                    } else {
+                        showToast(`Failed to upload ${file.name}`, 'error');
+                        results.innerHTML += `<div style="color: var(--error-600); margin-top: var(--space-2);">✗ ${file.name}: ${result.detail}</div>`;
+                    }
+                } catch (error) {
+                    showToast(`Error uploading ${file.name}`, 'error');
+                    results.innerHTML += `<div style="color: var(--error-600); margin-top: var(--space-2);">✗ ${file.name}: Upload failed</div>`;
                 }
             }
-            
-            const layout = {
-                title: {
-                    text: `${data.metric} Time Series with Forecast`,
-                    font: { size: 18, family: 'Inter' }
-                },
-                xaxis: { 
-                    title: 'Date',
-                    titlefont: { size: 14 }
-                },
-                yaxis: { 
-                    title: 'Value',
-                    titlefont: { size: 14 }
-                },
-                font: { family: 'Inter' },
-                plot_bgcolor: 'rgba(0,0,0,0)',
-                paper_bgcolor: 'rgba(0,0,0,0)'
-            };
-            
-            Plotly.newPlot('timeseriesChart', traces, layout, {responsive: true});
         }
-        
-        function createDecompositionPlot(data) {
-            if (!data.decomposition || data.decomposition.error) return;
+
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: var(--space-4) var(--space-6);
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                background-color: ${type === 'success' ? 'var(--success-600)' : type === 'error' ? 'var(--error-600)' : 'var(--primary-600)'};
+            `;
+            toast.textContent = message;
             
-            const decomp = data.decomposition;
-            const traces = [];
+            document.body.appendChild(toast);
             
-            traces.push({
-                x: decomp.trend.dates,
-                y: decomp.trend.values,
-                mode: 'lines',
-                type: 'scatter',
-                name: 'Trend',
-                yaxis: 'y1',
-                line: { color: 'var(--primary-600)', width: 2 }
-            });
-            
-            traces.push({
-                x: decomp.seasonal.dates,
-                y: decomp.seasonal.values,
-                mode: 'lines',
-                type: 'scatter',
-                name: 'Seasonal',
-                yaxis: 'y2',
-                line: { color: 'var(--success-600)', width: 2 }
-            });
-            
-            traces.push({
-                x: decomp.residual.dates,
-                y: decomp.residual.values,
-                mode: 'lines',
-                type: 'scatter',
-                name: 'Residual',
-                yaxis: 'y3',
-                line: { color: 'var(--warning-600)', width: 2 }
-            });
-            
-            const layout = {
-                title: {
-                    text: 'Time Series Decomposition (ARIMA)',
-                    font: { size: 18, family: 'Inter' }
-                },
-                grid: {rows: 3, columns: 1, subplots:[['xy'],['xy2'],['xy3']]},
-                yaxis: {title: 'Trend'},
-                yaxis2: {title: 'Seasonal'},
-                yaxis3: {title: 'Residual'},
-                font: { family: 'Inter' },
-                plot_bgcolor: 'rgba(0,0,0,0)',
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                height: 600
-            };
-            
-            Plotly.newPlot('decompositionChart', traces, layout, {responsive: true});
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
         }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initDashboard);
     </script>
 </body>
 </html>
