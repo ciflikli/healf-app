@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Diagnostic: Check base Python installation
+echo "Diagnosing base Python installation..."
+python --version
+python -c "import _signal; print('_signal module available in base Python')" || echo "ERROR: _signal module NOT available in base Python"
+
 # Remove any existing virtual environment to ensure a clean setup
 echo "Cleaning up any existing virtual environment..."
 rm -rf venv
