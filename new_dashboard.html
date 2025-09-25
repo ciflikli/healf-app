@@ -1,938 +1,116 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Health Analytics Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Health Data Analytics</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
-        :root {
-            /* Color System */
-            --primary-50: #eff6ff;
-            --primary-100: #dbeafe;
-            --primary-500: #3b82f6;
-            --primary-600: #2563eb;
-            --primary-700: #1d4ed8;
-            
-            --success-50: #f0fdf4;
-            --success-500: #22c55e;
-            --success-600: #16a34a;
-            
-            --warning-50: #fffbeb;
-            --warning-500: #f59e0b;
-            --warning-600: #d97706;
-            
-            --error-50: #fef2f2;
-            --error-500: #ef4444;
-            --error-600: #dc2626;
-            
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
-            
-            /* Spacing */
-            --space-1: 0.25rem;
-            --space-2: 0.5rem;
-            --space-3: 0.75rem;
-            --space-4: 1rem;
-            --space-6: 1.5rem;
-            --space-8: 2rem;
-            --space-12: 3rem;
-            
-            /* Shadows */
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background-color: var(--gray-50);
-            color: var(--gray-900);
-            line-height: 1.6;
-        }
-
-        .dashboard-container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 280px;
-            background: white;
-            border-right: 1px solid var(--gray-200);
-            padding: var(--space-6);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary-600);
-            margin-bottom: var(--space-8);
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-        }
-
-        .nav-section {
-            margin-bottom: var(--space-6);
-        }
-
-        .nav-title {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--gray-500);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: var(--space-3);
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: var(--space-3) var(--space-4);
-            border-radius: 8px;
-            color: var(--gray-700);
-            text-decoration: none;
-            transition: all 0.2s ease;
-            margin-bottom: var(--space-1);
-            cursor: pointer;
-        }
-
-        .nav-item:hover {
-            background-color: var(--primary-50);
-            color: var(--primary-600);
-        }
-
-        .nav-item.active {
-            background-color: var(--primary-100);
-            color: var(--primary-700);
-            font-weight: 500;
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            padding: var(--space-8);
-            overflow-y: auto;
-        }
-
-        .page-header {
-            margin-bottom: var(--space-8);
-        }
-
-        .page-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--gray-900);
-            margin-bottom: var(--space-2);
-        }
-
-        .page-subtitle {
-            color: var(--gray-600);
-            font-size: 1.1rem;
-        }
-
-        /* Cards */
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: var(--space-6);
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--gray-200);
-            transition: all 0.2s ease;
-        }
-
-        .card:hover {
-            box-shadow: var(--shadow-md);
-        }
-
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--gray-900);
-            margin-bottom: var(--space-4);
-        }
-
-        /* Grid System */
-        .grid {
-            display: grid;
-            gap: var(--space-6);
-        }
-
-        .grid-cols-1 { grid-template-columns: 1fr; }
-        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-        .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-        .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: var(--space-6);
-            margin-bottom: var(--space-8);
-        }
-
-        .stat-card {
-            background: white;
-            padding: var(--space-6);
-            border-radius: 12px;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--gray-200);
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary-600);
-            margin-bottom: var(--space-1);
-        }
-
-        .stat-label {
-            color: var(--gray-600);
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        /* Forms */
-        .form-group {
-            margin-bottom: var(--space-4);
-        }
-
-        .form-label {
-            display: block;
-            font-weight: 500;
-            color: var(--gray-700);
-            margin-bottom: var(--space-2);
-        }
-
-        .form-input, .form-select {
-            width: 100%;
-            padding: var(--space-3) var(--space-4);
-            border: 1px solid var(--gray-300);
-            border-radius: 8px;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-        }
-
-        .form-input:focus, .form-select:focus {
-            outline: none;
-            border-color: var(--primary-500);
-            box-shadow: 0 0 0 3px var(--primary-50);
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: var(--space-3) var(--space-6);
-            border-radius: 8px;
-            font-weight: 500;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            cursor: pointer;
-            border: none;
-            font-size: 0.875rem;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-600);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-700);
-        }
-
-        .btn-secondary {
-            background-color: var(--gray-100);
-            color: var(--gray-700);
-        }
-
-        .btn-secondary:hover {
-            background-color: var(--gray-200);
-        }
-
-        /* Loading States */
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: var(--space-8);
-            color: var(--gray-500);
-        }
-
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--gray-200);
-            border-top: 2px solid var(--primary-600);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: var(--space-2);
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* File Upload */
-        .file-upload {
-            border: 2px dashed var(--gray-300);
-            border-radius: 12px;
-            padding: var(--space-8);
-            text-align: center;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .file-upload:hover {
-            border-color: var(--primary-500);
-            background-color: var(--primary-50);
-        }
-
-        .file-upload.dragover {
-            border-color: var(--primary-600);
-            background-color: var(--primary-100);
-        }
-
-        /* Tables */
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: var(--space-4);
-        }
-
-        .table th,
-        .table td {
-            padding: var(--space-3) var(--space-4);
-            text-align: left;
-            border-bottom: 1px solid var(--gray-200);
-        }
-
-        .table th {
-            font-weight: 600;
-            color: var(--gray-700);
-            background-color: var(--gray-50);
-        }
-
-        .table tr:hover {
-            background-color: var(--gray-50);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .dashboard-container {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                padding: var(--space-4);
-            }
-            
-            .main-content {
-                padding: var(--space-4);
-            }
-            
-            .grid-cols-2,
-            .grid-cols-3,
-            .grid-cols-4 {
-                grid-template-columns: 1fr;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Chart Containers */
-        .chart-container {
-            background: white;
-            border-radius: 12px;
-            padding: var(--space-6);
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--gray-200);
-            margin-bottom: var(--space-6);
-        }
-
-        /* Hide sections initially */
-        .section {
-            display: none;
-        }
-
-        .section.active {
-            display: block;
-        }
-
-        /* Prediction Cards */
-        .prediction-card {
-            background: white;
-            border-radius: 12px;
-            padding: var(--space-6);
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--gray-200);
-            margin-bottom: var(--space-4);
-        }
-
-        .prediction-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--space-4);
-        }
-
-        .prediction-biomarker {
-            font-weight: 600;
-            color: var(--gray-900);
-        }
-
-        .prediction-confidence {
-            font-size: 0.875rem;
-            color: var(--gray-600);
-        }
-
-        .prediction-delta {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: var(--space-2);
-        }
-
-        .prediction-delta.positive {
-            color: var(--success-600);
-        }
-
-        .prediction-delta.negative {
-            color: var(--error-600);
-        }
-
-        .prediction-reasoning {
-            color: var(--gray-600);
-            font-size: 0.875rem;
-            line-height: 1.5;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f8f9fa; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .upload-zone { border: 2px dashed #ddd; padding: 20px; text-align: center; border-radius: 8px; cursor: pointer; }
+        .upload-zone:hover { border-color: #007bff; background: #f8f9ff; }
+        .btn { background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .btn:hover { background: #0056b3; }
+        .btn-secondary { background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-secondary:hover { background: #545b62; }
+        
+        /* Collapsible sections */
+        details { margin-bottom: 15px; }
+        summary { font-weight: bold; cursor: pointer; padding: 10px; background: #f8f9fa; border-radius: 4px; margin-bottom: 10px; }
+        summary:hover { background: #e9ecef; }
+        
+        /* Table styles */
+        .data-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .data-table th, .data-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .data-table th { background: #f8f9fa; font-weight: 600; }
+        .data-table tr:hover { background: #f8f9ff; }
+        
+        /* Form styles */
+        .form-input { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
+        .form-row { display: flex; gap: 10px; align-items: center; margin: 10px 0; }
+        .form-row label { min-width: 120px; font-weight: 500; }
+        .form-row select, .form-row input { flex: 1; }
+        
+        /* Prediction cards */
+        .prediction-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
+        .prediction-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; }
+        .prediction-improvement { border-left: 4px solid #28a745; }
+        .prediction-neutral { border-left: 4px solid #ffc107; }
+        .prediction-decline { border-left: 4px solid #dc3545; }
+        .prediction-value { font-size: 1.2em; font-weight: bold; color: #007bff; }
+        .prediction-delta { font-size: 0.9em; margin: 5px 0; }
+        .prediction-reasoning { font-size: 0.85em; color: #666; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="logo">
-                <span>🏥</span>
-                Health Analytics
-            </div>
-            
-            <nav>
-                <div class="nav-section">
-                    <div class="nav-title">Overview</div>
-                    <div class="nav-item active" onclick="showSection('overview')">Dashboard</div>
-                    <div class="nav-item" onclick="showSection('insights')">AI Insights</div>
-                </div>
-                
-                <div class="nav-section">
-                    <div class="nav-title">Analysis</div>
-                    <div class="nav-item" onclick="showSection('biomarkers')">Biomarkers</div>
-                    <div class="nav-item" onclick="showSection('supplements')">Supplements</div>
-                    <div class="nav-item" onclick="showSection('rdd-analysis')">RDD Analysis</div>
-                    <div class="nav-item" onclick="showSection('predictions')">Predictions</div>
-                </div>
-                
-                <div class="nav-section">
-                    <div class="nav-title">Data</div>
-                    <div class="nav-item" onclick="showSection('upload')">Upload Data</div>
-                    <div class="nav-item" onclick="showSection('health-metrics')">Health Metrics</div>
-                </div>
-            </nav>
+    <div class="container">
+        <div class="header">
+            <h1>🧬 Health Data Analytics</h1>
+            <p>Track biomarkers, analyze supplement effects, and predict health trends</p>
         </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Overview Section -->
-            <div id="overview" class="section active">
-                <div class="page-header">
-                    <h1 class="page-title">Health Analytics Dashboard</h1>
-                    <p class="page-subtitle">Track biomarkers, analyze supplement effectiveness, and predict health trends</p>
+        
+        <!-- Collapsible Data Upload Section -->
+        <div class="card">
+            <h3>📊 Data Upload</h3>
+            
+            <details>
+                <summary>📁 Upload Health Data CSV</summary>
+                <div class="upload-zone" onclick="document.getElementById('csvFile').click()">
+                    <div>Click to upload CSV file</div>
+                    <small>Expected columns: date, metric_name, value, unit</small>
                 </div>
-
-                <!-- Quick Stats -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" id="biomarker-count">-</div>
-                        <div class="stat-label">Biomarkers Tracked</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="supplement-count">-</div>
-                        <div class="stat-label">Active Supplements</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="metric-count">-</div>
-                        <div class="stat-label">Health Metrics</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="days-tracked">-</div>
-                        <div class="stat-label">Days Tracked</div>
-                    </div>
-                </div>
-
-                <!-- Recent Biomarkers Chart -->
-                <div class="chart-container">
-                    <h3 class="card-title">Recent Biomarker Trends</h3>
-                    <div id="biomarker-trends-chart"></div>
-                </div>
-
-                <!-- Health Metrics Overview -->
-                <div class="chart-container">
-                    <h3 class="card-title">Health Metrics Overview</h3>
-                    <div id="health-metrics-chart"></div>
-                </div>
-            </div>
-
-            <!-- AI Insights Section -->
-            <div id="insights" class="section">
-                <div class="page-header">
-                    <h1 class="page-title">AI-Powered Insights</h1>
-                    <p class="page-subtitle">Get intelligent analysis of your health data and supplement effectiveness</p>
-                </div>
-
-                <div class="card">
-                    <button class="btn btn-primary" onclick="generateInsights()">Generate New Insights</button>
-                    <div id="insights-content" class="loading" style="display: none;">
-                        <div class="spinner"></div>
-                        Analyzing your health data...
-                    </div>
-                    <div id="insights-results"></div>
-                </div>
-            </div>
-
-            <!-- Biomarkers Section -->
-            <div id="biomarkers" class="section">
-                <div class="page-header">
-                    <h1 class="page-title">Biomarker Analysis</h1>
-                    <p class="page-subtitle">Track and analyze your laboratory test results</p>
-                </div>
-
-                <div class="grid grid-cols-1">
-                    <div class="card">
-                        <h3 class="card-title">Add New Biomarker</h3>
-                        <form id="biomarker-form">
-                            <div class="grid grid-cols-2">
-                                <div class="form-group">
-                                    <label class="form-label">Biomarker Name</label>
-                                    <input type="text" class="form-input" name="name" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Value</label>
-                                    <input type="number" step="0.01" class="form-input" name="value" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Unit</label>
-                                    <input type="text" class="form-input" name="unit">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Test Date</label>
-                                    <input type="date" class="form-input" name="test_date" required>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Add Biomarker</button>
-                        </form>
-                    </div>
-
-                    <div class="card">
-                        <h3 class="card-title">Current Biomarkers</h3>
-                        <div id="biomarkers-table"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Supplements Section -->
-            <div id="supplements" class="section">
-                <div class="page-header">
-                    <h1 class="page-title">Supplement Tracking</h1>
-                    <p class="page-subtitle">Monitor your supplement regimen and expected effects</p>
-                </div>
-
-                <div class="grid grid-cols-1">
-                    <div class="card">
-                        <h3 class="card-title">Add New Supplement</h3>
-                        <form id="supplement-form">
-                            <div class="grid grid-cols-2">
-                                <div class="form-group">
-                                    <label class="form-label">Supplement Name</label>
-                                    <input type="text" class="form-input" name="name" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Start Date</label>
-                                    <input type="date" class="form-input" name="start_date" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Dosage</label>
-                                    <input type="text" class="form-input" name="dosage">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Expected Biomarkers</label>
-                                    <input type="text" class="form-input" name="expected_biomarkers" placeholder="e.g., Vitamin D, Cholesterol">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Notes</label>
-                                <textarea class="form-input" name="notes" rows="3"></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Add Supplement</button>
-                        </form>
-                    </div>
-
-                    <div class="card">
-                        <h3 class="card-title">Current Supplements</h3>
-                        <div id="supplements-table"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- RDD Analysis Section -->
-            <div id="rdd-analysis" class="section">
-                <div class="page-header">
-                    <h1 class="page-title">Regression Discontinuity Analysis</h1>
-                    <p class="page-subtitle">Measure causal effects of supplement interventions</p>
-                </div>
-
-                <div class="card">
-                    <h3 class="card-title">Analyze Supplement Effect</h3>
-                    <form id="rdd-form">
-                        <div class="grid grid-cols-3">
-                            <div class="form-group">
-                                <label class="form-label">Health Metric</label>
-                                <select class="form-select" name="metric_name" required>
-                                    <option value="">Select metric...</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Intervention Date</label>
-                                <input type="date" class="form-input" name="intervention_date" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Bandwidth (days)</label>
-                                <input type="number" class="form-input" name="bandwidth" value="30" min="7" max="90">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Run RDD Analysis</button>
-                    </form>
-                    <div id="rdd-results"></div>
-                </div>
-            </div>
-
-            <!-- Predictions Section -->
-            <div id="predictions" class="section">
-                <div class="page-header">
-                    <h1 class="page-title">Biomarker Predictions</h1>
-                    <p class="page-subtitle">AI-powered predictions for future biomarker changes</p>
-                </div>
-
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6);">
-                        <h3 class="card-title" style="margin-bottom: 0;">Stored Predictions</h3>
-                        <button class="btn btn-primary" onclick="loadStoredPredictions()">Refresh Predictions</button>
-                    </div>
-                    <div id="predictions-content"></div>
-                </div>
-            </div>
-
-            <!-- Upload Data Section -->
-            <div id="upload" class="section">
-                <div class="page-header">
-                    <h1 class="page-title">Upload Health Data</h1>
-                    <p class="page-subtitle">Import CSV files with your health metrics</p>
-                </div>
-
-                <div class="card">
-                    <h3 class="card-title">CSV File Upload</h3>
-                    <div class="file-upload" id="file-upload">
-                        <div style="margin-bottom: var(--space-4);">
-                            <div style="font-size: 3rem; margin-bottom: var(--space-2);">📁</div>
-                            <div style="font-weight: 600; margin-bottom: var(--space-2);">Drop CSV files here or click to browse</div>
-                            <div style="color: var(--gray-500); font-size: 0.875rem;">Expected format: date, metric_name, value, unit</div>
-                        </div>
-                        <input type="file" id="csv-file" accept=".csv" style="display: none;" multiple>
-                    </div>
-                    <div id="upload-results"></div>
-                </div>
-            </div>
-
-            <!-- Health Metrics Section -->
-            <div id="health-metrics" class="section">
-                <div class="page-header">
-                    <h1 class="page-title">Health Metrics</h1>
-                    <p class="page-subtitle">View and analyze your continuous health monitoring data</p>
-                </div>
-
-                <div class="card">
-                    <h3 class="card-title">Metrics Overview</h3>
-                    <div id="health-metrics-table"></div>
-                </div>
-            </div>
+                <input type="file" id="csvFile" accept=".csv" style="display: none;" onchange="uploadCSV(this)">
+            </details>
+            
+            <details>
+                <summary>🩸 Add Blood Test Results</summary>
+                <form onsubmit="addBiomarker(event)">
+                    <input type="text" id="biomarkerName" placeholder="Biomarker name" required class="form-input">
+                    <input type="number" id="biomarkerValue" placeholder="Value" step="0.01" required class="form-input">
+                    <input type="text" id="biomarkerUnit" placeholder="Unit (e.g., mg/dL)" class="form-input">
+                    <input type="date" id="testDate" required class="form-input">
+                    <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Add Biomarker</button>
+                </form>
+            </details>
+            
+            <details>
+                <summary>💊 Track Supplements</summary>
+                <form onsubmit="addSupplement(event)">
+                    <input type="text" id="supplementName" placeholder="Supplement name" required class="form-input">
+                    <input type="date" id="supplementStartDate" required class="form-input">
+                    <input type="text" id="supplementDosage" placeholder="Dosage (e.g., 500mg daily)" class="form-input">
+                    <input type="text" id="expectedBiomarkers" placeholder="Expected biomarkers (optional)" class="form-input">
+                    <textarea id="supplementNotes" placeholder="Notes (optional)" class="form-input" style="height: 60px; resize: vertical;"></textarea>
+                    <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Add Supplement</button>
+                </form>
+            </details>
         </div>
-    </div>
-
-    <script>
-        // Global state
-        let currentData = {
-            biomarkers: [],
-            supplements: [],
-            healthMetrics: [],
-            uniqueMetrics: []
-        };
-
-        // Navigation
-        function showSection(sectionId) {
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Remove active class from nav items
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Show selected section
-            document.getElementById(sectionId).classList.add('active');
-            
-            // Add active class to clicked nav item
-            event.target.classList.add('active');
-            
-            // Load section-specific data
-            loadSectionData(sectionId);
-        }
-
-        // Load data for specific sections
-        async function loadSectionData(sectionId) {
-            switch(sectionId) {
-                case 'overview':
-                    await loadOverviewData();
-                    break;
-                case 'biomarkers':
-                    await loadBiomarkers();
-                    break;
-                case 'supplements':
-                    await loadSupplements();
-                    break;
-                case 'rdd-analysis':
-                    await loadUniqueMetrics();
-                    break;
-                case 'predictions':
-                    await loadStoredPredictions();
-                    break;
-                case 'health-metrics':
-                    await loadHealthMetrics();
-                    break;
-            }
-        }
-
-        // Initialize dashboard
-        async function initDashboard() {
-            try {
-                await loadOverviewData();
-                setupEventListeners();
-            } catch (error) {
-                console.error('Failed to initialize dashboard:', error);
-            }
-        }
-
-        // Load overview data
-        async function loadOverviewData() {
-            try {
-                // Load all data
-                const [biomarkers, supplements, healthMetrics] = await Promise.all([
-                    fetch('/biomarkers').then(r => r.json()),
-                    fetch('/supplements').then(r => r.json()),
-                    fetch('/health-metrics').then(r => r.json())
-                ]);
-
-                currentData.biomarkers = biomarkers;
-                currentData.supplements = supplements;
-                currentData.healthMetrics = healthMetrics;
-
-                // Update stats
-                document.getElementById('biomarker-count').textContent = biomarkers.length;
-                document.getElementById('supplement-count').textContent = supplements.length;
-                document.getElementById('metric-count').textContent = healthMetrics.length;
-                
-                // Calculate days tracked
-                if (healthMetrics.length > 0) {
-                    const dates = healthMetrics.map(m => new Date(m.measurement_date));
-                    const minDate = new Date(Math.min(...dates));
-                    const maxDate = new Date(Math.max(...dates));
-                    const daysDiff = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24));
-                    document.getElementById('days-tracked').textContent = daysDiff;
-                }
-
-                // Create charts
-                createBiomarkerTrendsChart(biomarkers);
-                createHealthMetricsChart(healthMetrics);
-
-            } catch (error) {
-                console.error('Failed to load overview data:', error);
-            }
-        }
-
-        // Create biomarker trends chart
-        function createBiomarkerTrendsChart(biomarkers) {
-            if (biomarkers.length === 0) return;
-
-            // Group by biomarker name
-            const biomarkerGroups = {};
-            biomarkers.forEach(b => {
-                if (!biomarkerGroups[b.name]) {
-                    biomarkerGroups[b.name] = [];
-                }
-                biomarkerGroups[b.name].push(b);
-            });
-
-            const traces = Object.keys(biomarkerGroups).slice(0, 5).map(name => {
-                const data = biomarkerGroups[name].sort((a, b) => new Date(a.test_date) - new Date(b.test_date));
-                return {
-                    x: data.map(d => d.test_date),
-                    y: data.map(d => d.value),
-                    name: name,
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    line: { width: 3 },
-                    marker: { size: 8 }
-                };
-            });
-
-            const layout = {
-                title: '',
-                font: { family: 'Inter, sans-serif' },
-                xaxis: { title: 'Date' },
-                yaxis: { title: 'Value' },
-                showlegend: true,
-                margin: { t: 20, r: 20, b: 60, l: 60 }
-            };
-
-            Plotly.newPlot('biomarker-trends-chart', traces, layout, {responsive: true});
-        }
-
-        // Create health metrics chart
-        function createHealthMetricsChart(healthMetrics) {
-            if (healthMetrics.length === 0) return;
-
-            // Get unique metrics and show top 3
-            const metricGroups = {};
-            healthMetrics.forEach(m => {
-                if (!metricGroups[m.metric_name]) {
-                    metricGroups[m.metric_name] = [];
-                }
-                metricGroups[m.metric_name].push(m);
-            });
-
-            const traces = Object.keys(metricGroups).slice(0, 3).map(name => {
-                const data = metricGroups[name].sort((a, b) => new Date(a.measurement_date) - new Date(b.measurement_date));
-                return {
-                    x: data.map(d => d.measurement_date),
-                    y: data.map(d => d.value),
-                    name: name.replace('_', ' ').toUpperCase(),
-                    type: 'scatter',
-                    mode: 'lines',
-                    line: { width: 2 }
-                };
-            });
-
-            const layout = {
-                title: '',
-                font: { family: 'Inter, sans-serif' },
-                xaxis: { title: 'Date' },
-                yaxis: { title: 'Value' },
-                showlegend: true,
-                margin: { t: 20, r: 20, b: 60, l: 60 }
-            };
-
-            Plotly.newPlot('health-metrics-chart', traces, layout, {responsive: true});
-        }
-
-        // Load biomarkers
-        async function loadBiomarkers() {
-            try {
-                const biomarkers = await fetch('/biomarkers').then(r => r.json());
-                displayBiomarkersTable(biomarkers);
-            } catch (error) {
-                console.error('Failed to load biomarkers:', error);
-            }
-        }
-
-        // Display biomarkers table
-        function displayBiomarkersTable(biomarkers) {
-            const container = document.getElementById('biomarkers-table');
-            
-            if (biomarkers.length === 0) {
-                container.innerHTML = '<p style="color: var(--gray-500); text-align: center; padding: var(--space-8);">No biomarkers found. Add your first biomarker above.</p>';
-                return;
-            }
-
-            const table = `
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Value</th>
-                            <th>Unit</th>
-                            <th>Test Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${biomarkers.map(b => `
-                            <tr>
-                                <td style="font-weight: 500;">${b.name}</td>
-                                <td>${b.value}</td>
-                                <td>${b.unit || '-'}</td>
-                                <td>${new Date(b.test_date).toLocaleDateString()}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-            
-            container.innerHTML = table;
-        }
-
-        // Load supplements
-        async function loadSupplements() {
-            try {
-                const supplements = await fetch('/supplements').then(r => r.json());
-                displaySupplementsTable(supplements);
-            } catch (error) {
-                console.error('Failed to load supplements:', error);
-            }
-        }
-
-        // Display supplements table
-        function displaySupplementsTable(supplements) {
-            const container = document.getElementById('supplements-table');
-            
-            if (supplements.length === 0) {
-                container.innerHTML = '<p style="color: var(--gray-500); text-align: center; padding: var(--space-8);">No supplements found. Add your first supplement above.</p>';
-                return;
-            }
-
-            const table = `
-                <table class="table">
+        
+        <!-- 1. Biomarker Trends (First Section with Viridis Colors) -->
+        <div class="card">
+            <h3>🧬 Biomarker Trends</h3>
+            <div class="form-row">
+                <label>Test Date:</label>
+                <select id="biomarkerTestSelect" onchange="updateBiomarkerChart()">
+                    <option value="latest">Latest Test</option>
+                </select>
+                <button onclick="loadBiomarkerDates()" class="btn-secondary">Refresh Dates</button>
+            </div>
+            <div id="biomarkerChart" style="height: 400px;"></div>
+        </div>
+        
+        <!-- 2. Supplement Data (Table View) -->
+        <div class="card">
+            <h3>💊 Supplement Data</h3>
+            <div class="form-row">
+                <button onclick="populateSupplementBiomarkers()" class="btn-secondary">🤖 Auto-populate Expected Biomarkers</button>
+                <small style="color: #666; margin-left: 15px;">Uses AI to determine which biomarkers each supplement should affect</small>
+            </div>
+            <div id="supplementTable">
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -941,399 +119,819 @@
                             <th>Expected Biomarkers</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        ${supplements.map(s => `
-                            <tr>
-                                <td style="font-weight: 500;">${s.name}</td>
-                                <td>${new Date(s.start_date).toLocaleDateString()}</td>
-                                <td>${s.dosage || '-'}</td>
-                                <td>${s.expected_biomarkers || '-'}</td>
-                            </tr>
-                        `).join('')}
+                    <tbody id="supplementTableBody">
+                        <tr><td colspan="4">Loading supplement data...</td></tr>
                     </tbody>
                 </table>
-            `;
-            
-            container.innerHTML = table;
+            </div>
+        </div>
+        
+        <!-- 3. Regression Discontinuity Analysis (Enhanced with Slopes) -->
+        <div class="card">
+            <h3>📈 Regression Discontinuity Analysis</h3>
+            <div class="form-row">
+                <label>Metric:</label>
+                <select id="rddMetricSelect">
+                    <option value="">Select a metric...</option>
+                </select>
+                <label>Intervention:</label>
+                <select id="rddInterventionSelect">
+                    <option value="">Select intervention date...</option>
+                </select>
+                <button onclick="analyzeRDDWithPlots()" class="btn">Analyze with Plots</button>
+            </div>
+            <div id="rddResults"></div>
+            <div id="rddPlotChart" style="height: 400px;"></div>
+        </div>
+        
+        <!-- 4. Health Metrics Time Series (ARIMA Decomposition) -->
+        <div class="card">
+            <h3>📊 Health Metrics Time Series Analysis</h3>
+            <div class="form-row">
+                <label>Metric:</label>
+                <select id="timeseriesMetricSelect">
+                    <option value="">Select a metric...</option>
+                </select>
+                <button onclick="analyzeTimeSeries()" class="btn">Analyze Time Series</button>
+            </div>
+            <div id="timeseriesChart" style="height: 500px;"></div>
+            <div id="decompositionChart" style="height: 600px;"></div>
+        </div>
+        
+        <!-- 5. AI-Powered Biomarker Delta Predictions -->
+        <div class="card">
+            <h3>🔮 Expected Biomarker Changes (Next Blood Test)</h3>
+            <div class="form-row">
+                <label>Biomarker:</label>
+                <select id="deltaBiomarkerSelect" onchange="updatePredictionDisplay()">
+                    <option value="">All biomarkers</option>
+                </select>
+                <label>Months Ahead:</label>
+                <select id="deltaMonthsSelect" onchange="updatePredictionDisplay()">
+                    <option value="">All timeframes</option>
+                    <option value="3">3 months</option>
+                    <option value="6">6 months</option>
+                    <option value="12">12 months</option>
+                </select>
+            </div>
+            <div id="deltaPredictions" class="prediction-grid"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let currentBiomarkerDates = {};
+        let uniqueHealthMetrics = [];
+        let supplementsList = [];
+        let biomarkersList = [];
+        
+        // Load dashboard data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+        });
+        
+        async function loadDashboardData() {
+            try {
+                // Load biomarker dates for selector
+                await loadBiomarkerDates();
+                
+                // Load unique health metrics for dropdowns
+                await loadUniqueMetrics();
+                
+                // Load supplements for dropdown
+                await loadSupplementsList();
+                
+                // Load intervention dates for RDD dropdown
+                await loadInterventionDates();
+                
+                // Load biomarkers for delta predictions
+                await loadBiomarkersList();
+                
+                // Load initial biomarker chart with viridis colors
+                await updateBiomarkerChart();
+                
+                // Load supplement table data
+                await loadSupplementTable();
+                
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+            }
         }
-
-        // Load unique metrics for RDD analysis
+        
+        async function loadBiomarkerDates() {
+            try {
+                const response = await fetch('/biomarkers/dates');
+                currentBiomarkerDates = await response.json();
+                
+                // Update date selector
+                const selector = document.getElementById('biomarkerTestSelect');
+                selector.innerHTML = '<option value="latest">Latest Test</option>';
+                
+                // Add unique dates across all biomarkers
+                const allDates = new Set();
+                Object.values(currentBiomarkerDates).forEach(dates => {
+                    dates.forEach(d => allDates.add(d.date));
+                });
+                
+                Array.from(allDates).sort().reverse().forEach(date => {
+                    const option = document.createElement('option');
+                    option.value = date;
+                    option.textContent = new Date(date).toLocaleDateString();
+                    selector.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Failed to load biomarker dates:', error);
+            }
+        }
+        
         async function loadUniqueMetrics() {
             try {
-                const metrics = await fetch('/health-metrics/unique').then(r => r.json());
-                currentData.uniqueMetrics = metrics;
+                const response = await fetch('/health-metrics/unique');
+                uniqueHealthMetrics = await response.json();
                 
-                const select = document.querySelector('#rdd-form select[name="metric_name"]');
-                select.innerHTML = '<option value="">Select metric...</option>' + 
-                    metrics.map(m => `<option value="${m.name}">${m.name.replace('_', ' ').toUpperCase()} (${m.data_points} points)</option>`).join('');
+                // Populate metric selectors
+                const rddSelector = document.getElementById('rddMetricSelect');
+                const timeseriesSelector = document.getElementById('timeseriesMetricSelect');
+                
+                [rddSelector, timeseriesSelector].forEach(selector => {
+                    selector.innerHTML = '<option value="">Select a metric...</option>';
+                    uniqueHealthMetrics.forEach(metric => {
+                        const option = document.createElement('option');
+                        option.value = metric.name;
+                        option.textContent = `${metric.name} (${metric.data_points} points)`;
+                        selector.appendChild(option);
+                    });
+                });
+                
             } catch (error) {
                 console.error('Failed to load unique metrics:', error);
             }
         }
-
-        // Load stored predictions
-        async function loadStoredPredictions() {
+        
+        async function loadSupplementsList() {
             try {
-                const predictions = await fetch('/ai/stored-predictions').then(r => r.json());
-                displayPredictions(predictions);
+                const response = await fetch('/supplements');
+                supplementsList = await response.json();
+                
+                // Keep existing supplement selector population for other uses
+                // (RDD now uses intervention dates populated separately)
+                
             } catch (error) {
-                console.error('Failed to load predictions:', error);
-                document.getElementById('predictions-content').innerHTML = '<p style="color: var(--error-500);">Failed to load predictions</p>';
+                console.error('Failed to load supplements:', error);
             }
         }
-
-        // Display predictions
-        function displayPredictions(predictions) {
-            const container = document.getElementById('predictions-content');
+        
+        async function loadInterventionDates() {
+            try {
+                const response = await fetch('/supplements');
+                const supplements = await response.json();
+                
+                // Get distinct start dates from supplements
+                const uniqueDates = [...new Set(supplements.map(s => s.start_date))].sort();
+                
+                // Populate intervention selector for RDD
+                const selector = document.getElementById('rddInterventionSelect');
+                selector.innerHTML = '<option value="">Select intervention date...</option>';
+                
+                uniqueDates.forEach(date => {
+                    const option = document.createElement('option');
+                    option.value = date;
+                    option.textContent = date;
+                    selector.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Failed to load intervention dates:', error);
+            }
+        }
+        
+        async function loadBiomarkersList() {
+            try {
+                const response = await fetch('/biomarkers');
+                biomarkersList = await response.json();
+                
+                // Get unique biomarker names for delta prediction selector
+                const uniqueNames = [...new Set(biomarkersList.map(b => b.name))];
+                const selector = document.getElementById('deltaBiomarkerSelect');
+                selector.innerHTML = '<option value="">All biomarkers</option>';
+                
+                uniqueNames.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    selector.appendChild(option);
+                });
+                
+                // Load and display stored predictions automatically
+                await loadStoredPredictions();
+                
+            } catch (error) {
+                console.error('Failed to load biomarkers:', error);
+            }
+        }
+        
+        async function updateBiomarkerChart() {
+            try {
+                const response = await fetch('/biomarkers');
+                const biomarkers = await response.json();
+                
+                if (biomarkers.length === 0) return;
+                
+                // Get selected test date
+                const selectedDate = document.getElementById('biomarkerTestSelect').value;
+                let filteredBiomarkers = biomarkers;
+                
+                if (selectedDate !== 'latest') {
+                    filteredBiomarkers = biomarkers.filter(b => b.test_date === selectedDate);
+                } else {
+                    // Get latest value for each biomarker
+                    const latest = {};
+                    biomarkers.forEach(item => {
+                        const biomarker = item.name;
+                        if (!latest[biomarker] || item.test_date > latest[biomarker].test_date) {
+                            latest[biomarker] = item;
+                        }
+                    });
+                    filteredBiomarkers = Object.values(latest);
+                }
+                
+                // Sort biomarkers by value for easier reading
+                const sortedBiomarkers = filteredBiomarkers.sort((a, b) => b.value - a.value);
+                const names = sortedBiomarkers.map(b => b.name);
+                const values = sortedBiomarkers.map(b => b.value);
+                
+                // Use viridis colorscale with horizontal bars
+                const trace = {
+                    x: values,  // Values on x-axis (horizontal)
+                    y: names,   // Names on y-axis
+                    type: 'bar',
+                    orientation: 'h',  // Horizontal bars
+                    marker: {
+                        color: values,
+                        colorscale: 'Viridis',
+                        showscale: true,
+                        colorbar: {
+                            title: 'Biomarker Values'
+                        }
+                    },
+                    hovertemplate: '<b>%{y}</b><br>Value: %{x}<br><extra></extra>'
+                };
+                
+                const layout = {
+                    title: 'Biomarker Values (Sorted by Value, Viridis Color Scale)',
+                    xaxis: { title: 'Values' },
+                    yaxis: { title: 'Biomarkers' },
+                    margin: { l: 150, r: 60, t: 60, b: 60 },  // More left margin for biomarker names
+                    template: 'plotly_white'
+                };
+                
+                Plotly.newPlot('biomarkerChart', [trace], layout);
+                
+            } catch (error) {
+                console.error('Failed to update biomarker chart:', error);
+            }
+        }
+        
+        async function loadSupplementTable() {
+            try {
+                const response = await fetch('/supplements');
+                const supplements = await response.json();
+                
+                const tableBody = document.getElementById('supplementTableBody');
+                
+                if (supplements.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666;">No supplement data available</td></tr>';
+                    return;
+                }
+                
+                tableBody.innerHTML = supplements.map(supplement => `
+                    <tr>
+                        <td><strong>${supplement.name}</strong></td>
+                        <td>${new Date(supplement.start_date).toLocaleDateString()}</td>
+                        <td>${supplement.dosage || 'Not specified'}</td>
+                        <td>${supplement.expected_biomarkers || 'None specified'}</td>
+                    </tr>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Failed to load supplement table:', error);
+            }
+        }
+        
+        async function populateSupplementBiomarkers() {
+            try {
+                const button = event.target;
+                button.disabled = true;
+                button.textContent = '🔄 Populating...';
+                
+                const response = await fetch('/populate-supplement-biomarkers', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(result.message || 'Successfully populated expected biomarkers!');
+                    // Reload the supplement table to show updated data
+                    await loadSupplementTable();
+                } else {
+                    alert('Error: ' + (result.error || result.detail || 'Failed to populate biomarkers'));
+                }
+                
+            } catch (error) {
+                console.error('Failed to populate supplement biomarkers:', error);
+                alert('Failed to populate biomarkers: ' + error.message);
+            } finally {
+                // Reset button
+                const button = document.querySelector('button[onclick="populateSupplementBiomarkers()"]');
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = '🤖 Auto-populate Expected Biomarkers';
+                }
+            }
+        }
+        
+        async function analyzeRDDWithPlots() {
+            const metric = document.getElementById('rddMetricSelect').value;
+            const interventionDate = document.getElementById('rddInterventionSelect').value;
             
-            if (predictions.length === 0) {
-                container.innerHTML = '<p style="color: var(--gray-500); text-align: center; padding: var(--space-8);">No predictions available. Click "Refresh Predictions" to generate new ones.</p>';
+            if (!metric || !interventionDate) {
+                alert('Please select both a metric and an intervention date');
                 return;
             }
-
-            // Group by biomarker
-            const grouped = {};
-            predictions.forEach(p => {
-                if (!grouped[p.biomarker_name]) {
-                    grouped[p.biomarker_name] = [];
-                }
-                grouped[p.biomarker_name].push(p);
-            });
-
-            const html = Object.keys(grouped).map(biomarker => {
-                const biomarkerPredictions = grouped[biomarker].sort((a, b) => a.months_ahead - b.months_ahead);
+            
+            try {
+                const response = await fetch(`/rdd/plot/${encodeURIComponent(metric)}/${encodeURIComponent(interventionDate)}`);
+                const result = await response.json();
                 
-                return `
-                    <div class="prediction-card">
-                        <h4 style="font-weight: 600; margin-bottom: var(--space-4); color: var(--gray-900);">${biomarker}</h4>
-                        <div class="grid grid-cols-3">
-                            ${biomarkerPredictions.map(p => `
-                                <div style="text-align: center; padding: var(--space-4); border: 1px solid var(--gray-200); border-radius: 8px;">
-                                    <div style="font-size: 0.875rem; color: var(--gray-600); margin-bottom: var(--space-2);">${p.months_ahead} Months</div>
-                                    <div class="prediction-delta ${p.predicted_delta >= 0 ? 'positive' : 'negative'}" style="font-size: 1.25rem; font-weight: 700; margin-bottom: var(--space-1);">
-                                        ${p.predicted_delta >= 0 ? '+' : ''}${p.predicted_delta.toFixed(2)}
-                                    </div>
-                                    <div style="font-size: 0.75rem; color: var(--gray-500);">
-                                        ${(p.confidence * 100).toFixed(0)}% confidence
-                                    </div>
-                                    ${p.is_improvement ? '<div style="color: var(--success-600); font-size: 0.75rem; margin-top: var(--space-1);">✓ Improvement</div>' : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div style="margin-top: var(--space-4); padding: var(--space-4); background-color: var(--gray-50); border-radius: 8px;">
-                            <div style="font-size: 0.875rem; color: var(--gray-700); line-height: 1.5;">
-                                <strong>Reasoning:</strong> ${biomarkerPredictions[0].reasoning}
-                            </div>
-                        </div>
+                if (result.error) {
+                    document.getElementById('rddResults').innerHTML = `<p style="color: red;">${result.error}</p>`;
+                    return;
+                }
+                
+                // Display RDD results text
+                displayRDDResults(result.effect_analysis, metric);
+                
+                // Create RDD plot with before/after slopes
+                createRDDPlot(result.plot_data);
+                
+            } catch (error) {
+                console.error('RDD analysis failed:', error);
+                document.getElementById('rddResults').innerHTML = '<p style="color: red;">Analysis failed. Please try again.</p>';
+            }
+        }
+        
+        function displayRDDResults(result, metric) {
+            let html = `<h4>📊 Analysis Results for ${metric.replace('_', ' ').toUpperCase()}</h4>`;
+            
+            if (result.treatment_effect !== undefined) {
+                const effectColor = result.statistically_significant ? '#28a745' : '#6c757d';
+                const effectText = result.statistically_significant ? 'Statistically Significant' : 'Not Significant';
+                
+                html += `
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 2px solid ${effectColor};">
+                        <h5 style="color: ${effectColor}; margin-top: 0;">${effectText}</h5>
+                        <p><strong>Treatment Effect:</strong> ${result.treatment_effect.toFixed(3)}</p>
+                        <p><strong>P-value:</strong> ${result.treatment_p_value.toFixed(4)}</p>
+                        <p><strong>Effect Size:</strong> ${Math.abs(result.treatment_effect).toFixed(3)} units</p>
+                        <p><strong>Bandwidth:</strong> ${result.bandwidth_days} days</p>
+                        <p><strong>Data Points:</strong> ${result.n_observations}</p>
                     </div>
                 `;
-            }).join('');
-
-            container.innerHTML = html;
-        }
-
-        // Load health metrics
-        async function loadHealthMetrics() {
-            try {
-                const metrics = await fetch('/health-metrics').then(r => r.json());
-                displayHealthMetricsTable(metrics);
-            } catch (error) {
-                console.error('Failed to load health metrics:', error);
+            } else {
+                html += '<p>No effect could be estimated. Try adjusting the bandwidth or check if you have enough data points.</p>';
             }
-        }
-
-        // Display health metrics table
-        function displayHealthMetricsTable(metrics) {
-            const container = document.getElementById('health-metrics-table');
             
-            if (metrics.length === 0) {
-                container.innerHTML = '<p style="color: var(--gray-500); text-align: center; padding: var(--space-8);">No health metrics found. Upload CSV data to get started.</p>';
+            document.getElementById('rddResults').innerHTML = html;
+        }
+        
+        function createRDDPlot(plotData) {
+            if (plotData.error) {
+                document.getElementById('rddPlotChart').innerHTML = `<p style="color: red;">${plotData.error}</p>`;
                 return;
             }
-
-            // Show recent 50 entries
-            const recentMetrics = metrics.slice(-50).reverse();
             
-            const table = `
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Metric</th>
-                            <th>Value</th>
-                            <th>Unit</th>
-                            <th>Date</th>
-                            <th>Source</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${recentMetrics.map(m => `
-                            <tr>
-                                <td style="font-weight: 500;">${m.metric_name.replace('_', ' ').toUpperCase()}</td>
-                                <td>${m.value}</td>
-                                <td>${m.unit || '-'}</td>
-                                <td>${new Date(m.measurement_date).toLocaleDateString()}</td>
-                                <td style="font-size: 0.875rem; color: var(--gray-600);">${m.source || '-'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
+            const traces = [];
             
-            container.innerHTML = table;
+            // Scatter plot of data points
+            if (plotData.scatter) {
+                // Before treatment points
+                const beforeX = plotData.scatter.x_all.filter((x, i) => plotData.scatter.treatment[i] === 0);
+                const beforeY = plotData.scatter.y_all.filter((x, i) => plotData.scatter.treatment[i] === 0);
+                
+                traces.push({
+                    x: beforeX,
+                    y: beforeY,
+                    mode: 'markers',
+                    type: 'scatter',
+                    name: 'Before Treatment',
+                    marker: { color: 'blue', size: 8, opacity: 0.7 }
+                });
+                
+                // After treatment points  
+                const afterX = plotData.scatter.x_all.filter((x, i) => plotData.scatter.treatment[i] === 1);
+                const afterY = plotData.scatter.y_all.filter((x, i) => plotData.scatter.treatment[i] === 1);
+                
+                traces.push({
+                    x: afterX,
+                    y: afterY,
+                    mode: 'markers',
+                    type: 'scatter',
+                    name: 'After Treatment',
+                    marker: { color: 'red', size: 8, opacity: 0.7 }
+                });
+            }
+            
+            // Before treatment regression line
+            if (plotData.before_line) {
+                traces.push({
+                    x: plotData.before_line.x,
+                    y: plotData.before_line.y,
+                    mode: 'lines',
+                    type: 'scatter',
+                    name: 'Before Trend',
+                    line: { color: 'blue', width: 3, dash: 'solid' }
+                });
+            }
+            
+            // After treatment regression line
+            if (plotData.after_line) {
+                traces.push({
+                    x: plotData.after_line.x,
+                    y: plotData.after_line.y,
+                    mode: 'lines',
+                    type: 'scatter',
+                    name: 'After Trend',
+                    line: { color: 'red', width: 3, dash: 'solid' }
+                });
+            }
+            
+            // Cutoff line
+            traces.push({
+                x: [plotData.cutoff, plotData.cutoff],
+                y: [Math.min(...plotData.scatter.y_all) * 0.9, Math.max(...plotData.scatter.y_all) * 1.1],
+                mode: 'lines',
+                type: 'scatter',
+                name: 'Treatment Start',
+                line: { color: 'black', width: 2, dash: 'dash' }
+            });
+            
+            const layout = {
+                title: `Regression Discontinuity Analysis<br><sub>Treatment Effect: ${plotData.treatment_effect.toFixed(3)}</sub>`,
+                xaxis: { title: 'Days Relative to Treatment Start' },
+                yaxis: { title: 'Metric Value' },
+                template: 'plotly_white'
+            };
+            
+            Plotly.newPlot('rddPlotChart', traces, layout);
         }
-
-        // Generate insights
-        async function generateInsights() {
-            const button = event.target;
-            const content = document.getElementById('insights-content');
-            const results = document.getElementById('insights-results');
+        
+        async function analyzeTimeSeries() {
+            const metric = document.getElementById('timeseriesMetricSelect').value;
             
-            button.disabled = true;
-            button.textContent = 'Generating...';
-            content.style.display = 'flex';
-            results.innerHTML = '';
+            if (!metric) {
+                alert('Please select a metric');
+                return;
+            }
             
             try {
-                const response = await fetch('/generate-insights', { method: 'POST' });
-                const data = await response.json();
+                const response = await fetch(`/metrics/decompose/${encodeURIComponent(metric)}`);
+                const result = await response.json();
                 
-                content.style.display = 'none';
+                if (result.error) {
+                    document.getElementById('timeseriesChart').innerHTML = `<p style="color: red;">${result.error}</p>`;
+                    return;
+                }
                 
-                if (data.insights) {
-                    results.innerHTML = `
-                        <div style="margin-top: var(--space-6);">
-                            <h4 style="font-weight: 600; margin-bottom: var(--space-4);">Health Insights</h4>
-                            <div class="grid grid-cols-1" style="gap: var(--space-4);">
-                                <div style="padding: var(--space-4); background-color: var(--primary-50); border-radius: 8px; border-left: 4px solid var(--primary-500);">
-                                    <strong>Overall Trend:</strong> ${data.insights.overall_health_trend}
-                                </div>
-                                <div style="padding: var(--space-4); background-color: var(--gray-50); border-radius: 8px;">
-                                    <strong>Key Insights:</strong>
-                                    <ul style="margin-top: var(--space-2); padding-left: var(--space-4);">
-                                        ${data.insights.key_insights.map(insight => `<li>${insight}</li>`).join('')}
-                                    </ul>
-                                </div>
-                                <div style="padding: var(--space-4); background-color: var(--success-50); border-radius: 8px;">
-                                    <strong>Recommendations:</strong>
-                                    <ul style="margin-top: var(--space-2); padding-left: var(--space-4);">
-                                        ${data.insights.recommendations.map(rec => `<li>${rec}</li>`).join('')}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                // Create time series plot
+                createTimeSeriesPlot(result);
+                
+                // Create decomposition plot if available
+                if (result.decomposition && !result.decomposition.error) {
+                    createDecompositionPlot(result);
                 } else {
-                    results.innerHTML = '<p style="color: var(--error-500);">Failed to generate insights</p>';
+                    document.getElementById('decompositionChart').innerHTML = '<p>Decomposition not available - need more data points</p>';
+                }
+                
+            } catch (error) {
+                console.error('Time series analysis failed:', error);
+                document.getElementById('timeseriesChart').innerHTML = '<p style="color: red;">Analysis failed. Please try again.</p>';
+            }
+        }
+        
+        function createTimeSeriesPlot(data) {
+            const traces = [];
+            
+            // Original time series - use bar plot for better weekly data visualization
+            traces.push({
+                x: data.original.dates,
+                y: data.original.values,
+                type: 'bar',
+                name: 'Original Data',
+                marker: { color: 'blue' }
+            });
+            
+            // Forecast if available
+            if (data.forecast) {
+                traces.push({
+                    x: data.forecast.dates,
+                    y: data.forecast.predicted,
+                    mode: 'lines',
+                    type: 'scatter',
+                    name: 'Forecast',
+                    line: { color: 'red', dash: 'dash' }
+                });
+                
+                // Confidence intervals if available
+                if (data.forecast.lower_ci) {
+                    traces.push({
+                        x: data.forecast.dates.concat(data.forecast.dates.slice().reverse()),
+                        y: data.forecast.lower_ci.concat(data.forecast.upper_ci.slice().reverse()),
+                        fill: 'toself',
+                        fillcolor: 'rgba(255,0,0,0.2)',
+                        line: { color: 'transparent' },
+                        name: 'Forecast CI',
+                        showlegend: false
+                    });
+                }
+            }
+            
+            const layout = {
+                title: `${data.metric} Time Series with Forecast`,
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Value' },
+                template: 'plotly_white'
+            };
+            
+            Plotly.newPlot('timeseriesChart', traces, layout);
+        }
+        
+        function createDecompositionPlot(data) {
+            if (!data.decomposition || data.decomposition.error) return;
+            
+            const decomp = data.decomposition;
+            
+            // Create subplots for trend, seasonal, residual
+            const traces = [];
+            
+            // Trend
+            traces.push({
+                x: decomp.trend.dates,
+                y: decomp.trend.values,
+                mode: 'lines',
+                type: 'scatter',
+                name: 'Trend',
+                yaxis: 'y1'
+            });
+            
+            // Seasonal
+            traces.push({
+                x: decomp.seasonal.dates,
+                y: decomp.seasonal.values,
+                mode: 'lines',
+                type: 'scatter',
+                name: 'Seasonal',
+                yaxis: 'y2'
+            });
+            
+            // Residual
+            traces.push({
+                x: decomp.residual.dates,
+                y: decomp.residual.values,
+                mode: 'lines',
+                type: 'scatter',
+                name: 'Residual',
+                yaxis: 'y3'
+            });
+            
+            const layout = {
+                title: 'Time Series Decomposition (ARIMA)',
+                grid: {rows: 3, columns: 1, subplots:[['xy'],['xy2'],['xy3']]},
+                yaxis: {title: 'Trend'},
+                yaxis2: {title: 'Seasonal'},
+                yaxis3: {title: 'Residual'},
+                template: 'plotly_white',
+                height: 600
+            };
+            
+            Plotly.newPlot('decompositionChart', traces, layout);
+        }
+        
+        let storedPredictions = [];
+        
+        async function loadStoredPredictions() {
+            try {
+                const response = await fetch('/ai/stored-predictions');
+                storedPredictions = await response.json();
+                
+                console.log(`Loaded ${storedPredictions.length} stored predictions`);
+                
+                // Display all predictions initially
+                updatePredictionDisplay();
+                
+            } catch (error) {
+                console.error('Failed to load stored predictions:', error);
+                document.getElementById('deltaPredictions').innerHTML = '<p style="color: orange;">Predictions are being generated. Please refresh the page in a few minutes.</p>';
+            }
+        }
+        
+        function updatePredictionDisplay() {
+            const selectedBiomarker = document.getElementById('deltaBiomarkerSelect').value;
+            const selectedMonths = document.getElementById('deltaMonthsSelect').value;
+            
+            // Filter predictions based on selections
+            let filteredPredictions = storedPredictions;
+            
+            if (selectedBiomarker) {
+                filteredPredictions = filteredPredictions.filter(p => p.biomarker_name === selectedBiomarker);
+            }
+            
+            if (selectedMonths) {
+                filteredPredictions = filteredPredictions.filter(p => p.months_ahead == selectedMonths);
+            }
+            
+            // Display filtered predictions
+            displayPredictions(filteredPredictions);
+        }
+        
+        function displayPredictions(predictions) {
+            const container = document.getElementById('deltaPredictions');
+            
+            if (predictions.length === 0) {
+                container.innerHTML = '<p style="color: #666;">No predictions available for the selected filters.</p>';
+                return;
+            }
+            
+            let html = '';
+            
+            predictions.forEach(prediction => {
+                html += createPredictionCardHTML(prediction);
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function createPredictionCardHTML(prediction) {
+            const isImprovement = prediction.is_improvement;
+            const delta = prediction.predicted_delta;
+            const deltaClass = isImprovement ? 'improvement' : (delta > 0 ? 'increase' : 'decrease');
+            
+            return `
+                <div class="prediction-card ${deltaClass}">
+                    <div class="prediction-header">
+                        <h4>${prediction.biomarker_name}</h4>
+                        <span class="time-horizon">${prediction.months_ahead} months</span>
+                    </div>
+                    <div class="prediction-content">
+                        <div class="delta-info">
+                            <span class="delta-value">${delta > 0 ? '+' : ''}${delta}</span>
+                            <span class="improvement-indicator">${isImprovement ? '✅ Improvement' : '⚠️ Monitor'}</span>
+                        </div>
+                        <div class="prediction-details">
+                            <p><strong>Current:</strong> ${prediction.current_value}</p>
+                            <p><strong>Predicted:</strong> ${prediction.predicted_value}</p>
+                            <p><strong>Confidence:</strong> ${Math.round(prediction.confidence * 100)}%</p>
+                            <p><strong>Method:</strong> ${prediction.analysis_method}</p>
+                        </div>
+                        <div class="reasoning">
+                            <p>${prediction.reasoning}</p>
+                        </div>
+                        <div class="recommendation">
+                            <p><strong>Recommendation:</strong> ${prediction.recommendation}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createPredictionCard_DEPRECATED(prediction) {
+            const cardClass = prediction.is_improvement ? 'prediction-improvement' : 
+                             (Math.abs(prediction.predicted_delta) < 0.1 ? 'prediction-neutral' : 'prediction-decline');
+            
+            const deltaText = prediction.predicted_delta > 0 ? 
+                `+${prediction.predicted_delta}` : 
+                `${prediction.predicted_delta}`;
+            
+            const improvementIcon = prediction.is_improvement ? '✅' : '⚠️';
+            
+            const html = `
+                <div class="prediction-card ${cardClass}">
+                    <h4>${improvementIcon} ${prediction.biomarker}</h4>
+                    <div class="prediction-value">
+                        ${prediction.current_value} → ${prediction.predicted_value}
+                    </div>
+                    <div class="prediction-delta">
+                        Change: <strong>${deltaText}</strong>
+                        ${prediction.is_improvement ? '(Improvement)' : '(Monitor)'}
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <small><strong>Confidence:</strong> ${(prediction.confidence * 100).toFixed(0)}%</small><br>
+                        <small><strong>Timeframe:</strong> ${prediction.timeframe}</small><br>
+                        <small><strong>Method:</strong> ${prediction.analysis_method}</small>
+                    </div>
+                    <div class="prediction-reasoning">
+                        <strong>Reasoning:</strong> ${prediction.reasoning}
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <small><strong>Recommendation:</strong> ${prediction.recommendation}</small>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('deltaPredictions').innerHTML = html;
+        }
+        
+        // Original functions (modified for new structure)
+        async function uploadCSV(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/upload-csv', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(result.message);
+                    loadDashboardData(); // Refresh all data
+                } else {
+                    alert('Upload failed: ' + result.detail);
                 }
             } catch (error) {
-                content.style.display = 'none';
-                results.innerHTML = '<p style="color: var(--error-500);">Error generating insights</p>';
-            } finally {
-                button.disabled = false;
-                button.textContent = 'Generate New Insights';
+                alert('Upload failed: ' + error.message);
             }
         }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            // Biomarker form
-            document.getElementById('biomarker-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const data = Object.fromEntries(formData);
-                
-                try {
-                    const response = await fetch('/biomarkers', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                    
-                    if (response.ok) {
-                        e.target.reset();
-                        await loadBiomarkers();
-                        showToast('Biomarker added successfully', 'success');
-                    } else {
-                        showToast('Failed to add biomarker', 'error');
-                    }
-                } catch (error) {
-                    showToast('Error adding biomarker', 'error');
-                }
-            });
-
-            // Supplement form
-            document.getElementById('supplement-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const data = Object.fromEntries(formData);
-                
-                try {
-                    const response = await fetch('/supplements', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                    
-                    if (response.ok) {
-                        e.target.reset();
-                        await loadSupplements();
-                        showToast('Supplement added successfully', 'success');
-                    } else {
-                        showToast('Failed to add supplement', 'error');
-                    }
-                } catch (error) {
-                    showToast('Error adding supplement', 'error');
-                }
-            });
-
-            // RDD form
-            document.getElementById('rdd-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const data = Object.fromEntries(formData);
-                
-                const results = document.getElementById('rdd-results');
-                results.innerHTML = '<div class="loading"><div class="spinner"></div>Running analysis...</div>';
-                
-                try {
-                    const response = await fetch(`/rdd/plot/${data.metric_name}/${data.intervention_date}?bandwidth=${data.bandwidth}`);
-                    const result = await response.json();
-                    
-                    if (result.effect_analysis && !result.effect_analysis.error) {
-                        const effect = result.effect_analysis;
-                        results.innerHTML = `
-                            <div style="margin-top: var(--space-6);">
-                                <h4 style="font-weight: 600; margin-bottom: var(--space-4);">RDD Analysis Results</h4>
-                                <div class="grid grid-cols-2" style="gap: var(--space-4);">
-                                    <div style="padding: var(--space-4); background-color: var(--gray-50); border-radius: 8px;">
-                                        <div style="font-weight: 600; margin-bottom: var(--space-2);">Treatment Effect</div>
-                                        <div style="font-size: 1.5rem; font-weight: 700; color: ${effect.treatment_effect >= 0 ? 'var(--success-600)' : 'var(--error-600)'};">
-                                            ${effect.treatment_effect >= 0 ? '+' : ''}${effect.treatment_effect.toFixed(3)}
-                                        </div>
-                                        <div style="font-size: 0.875rem; color: var(--gray-600);">
-                                            ${effect.statistically_significant ? '✓ Statistically significant' : '✗ Not significant'}
-                                        </div>
-                                    </div>
-                                    <div style="padding: var(--space-4); background-color: var(--gray-50); border-radius: 8px;">
-                                        <div style="font-weight: 600; margin-bottom: var(--space-2);">P-value</div>
-                                        <div style="font-size: 1.5rem; font-weight: 700;">
-                                            ${effect.treatment_p_value ? effect.treatment_p_value.toFixed(4) : 'N/A'}
-                                        </div>
-                                        <div style="font-size: 0.875rem; color: var(--gray-600);">
-                                            R² = ${effect.r_squared.toFixed(3)}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        results.innerHTML = '<p style="color: var(--error-500);">Analysis failed or insufficient data</p>';
-                    }
-                } catch (error) {
-                    results.innerHTML = '<p style="color: var(--error-500);">Error running analysis</p>';
-                }
-            });
-
-            // File upload
-            const fileUpload = document.getElementById('file-upload');
-            const fileInput = document.getElementById('csv-file');
+        
+        async function addBiomarker(event) {
+            event.preventDefault();
             
-            fileUpload.addEventListener('click', () => fileInput.click());
-            fileUpload.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                fileUpload.classList.add('dragover');
-            });
-            fileUpload.addEventListener('dragleave', () => {
-                fileUpload.classList.remove('dragover');
-            });
-            fileUpload.addEventListener('drop', (e) => {
-                e.preventDefault();
-                fileUpload.classList.remove('dragover');
-                handleFileUpload(e.dataTransfer.files);
-            });
+            const biomarker = {
+                name: document.getElementById('biomarkerName').value,
+                value: parseFloat(document.getElementById('biomarkerValue').value),
+                unit: document.getElementById('biomarkerUnit').value,
+                test_date: document.getElementById('testDate').value
+            };
             
-            fileInput.addEventListener('change', (e) => {
-                handleFileUpload(e.target.files);
-            });
-        }
-
-        // Handle file upload
-        async function handleFileUpload(files) {
-            const results = document.getElementById('upload-results');
-            results.innerHTML = '';
-            
-            for (const file of files) {
-                if (!file.name.endsWith('.csv')) {
-                    showToast(`${file.name} is not a CSV file`, 'error');
-                    continue;
-                }
+            try {
+                const response = await fetch('/biomarkers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(biomarker)
+                });
                 
-                const formData = new FormData();
-                formData.append('file', file);
+                const result = await response.json();
                 
-                try {
-                    const response = await fetch('/upload-csv', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (response.ok) {
-                        showToast(`${file.name} uploaded successfully`, 'success');
-                        results.innerHTML += `<div style="color: var(--success-600); margin-top: var(--space-2);">✓ ${file.name}: ${result.message}</div>`;
-                    } else {
-                        showToast(`Failed to upload ${file.name}`, 'error');
-                        results.innerHTML += `<div style="color: var(--error-600); margin-top: var(--space-2);">✗ ${file.name}: ${result.detail}</div>`;
-                    }
-                } catch (error) {
-                    showToast(`Error uploading ${file.name}`, 'error');
-                    results.innerHTML += `<div style="color: var(--error-600); margin-top: var(--space-2);">✗ ${file.name}: Upload failed</div>`;
+                if (response.ok) {
+                    alert(result.message);
+                    event.target.reset();
+                    loadDashboardData(); // Refresh all data
+                } else {
+                    alert('Failed to add biomarker: ' + result.detail);
                 }
+            } catch (error) {
+                alert('Failed to add biomarker: ' + error.message);
             }
         }
-
-        // Toast notifications
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: var(--space-4) var(--space-6);
-                border-radius: 8px;
-                color: white;
-                font-weight: 500;
-                z-index: 1000;
-                animation: slideIn 0.3s ease;
-                background-color: ${type === 'success' ? 'var(--success-600)' : type === 'error' ? 'var(--error-600)' : 'var(--primary-600)'};
-            `;
-            toast.textContent = message;
+        
+        async function addSupplement(event) {
+            event.preventDefault();
             
-            document.body.appendChild(toast);
+            const supplement = {
+                name: document.getElementById('supplementName').value,
+                start_date: document.getElementById('supplementStartDate').value,
+                dosage: document.getElementById('supplementDosage').value,
+                expected_biomarkers: document.getElementById('expectedBiomarkers').value,
+                notes: document.getElementById('supplementNotes').value
+            };
             
-            setTimeout(() => {
-                toast.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => document.body.removeChild(toast), 300);
-            }, 3000);
+            try {
+                const response = await fetch('/supplements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(supplement)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(result.message);
+                    event.target.reset();
+                    loadDashboardData(); // Refresh all data
+                } else {
+                    alert('Failed to add supplement: ' + result.detail);
+                }
+            } catch (error) {
+                alert('Failed to add supplement: ' + error.message);
+            }
         }
-
-        // Add CSS animations
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            @keyframes slideOut {
-                from { transform: translateX(0); opacity: 1; }
-                to { transform: translateX(100%); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', initDashboard);
     </script>
 </body>
 </html>
