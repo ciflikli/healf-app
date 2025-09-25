@@ -8,7 +8,7 @@ python3 --version
 
 # Install dependencies directly without virtual environment
 echo "Installing dependencies..."
-pip install --user fastapi uvicorn numpy openai polars polars-ols pyarrow python-multipart scipy statsmodels
+pip3 install --user fastapi uvicorn numpy openai polars polars-ols pyarrow python-multipart scipy statsmodels
 
 # Start the FastAPI application with uvicorn
 echo "Starting FastAPI server on port 5000..."
