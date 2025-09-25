@@ -2,7 +2,7 @@
 
 # Install dependencies from pyproject.toml
 echo "Installing dependencies..."
-pip install -e .
+python -m pip install -e .
 
 # Start the application
 echo "Starting the application..."
