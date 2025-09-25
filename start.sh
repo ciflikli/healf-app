@@ -4,13 +4,13 @@
 
 # Use Python 3.11 directly from Nix
 echo "Using Python 3.11 from Nix environment..."
-python3.11 --version
+python3 --version
 
 # Install dependencies directly without virtual environment
 echo "Installing dependencies..."
 export PATH="$HOME/.local/bin:$PATH"
-python3.11 -m pip install --user fastapi uvicorn numpy openai polars polars-ols pyarrow python-multipart scipy statsmodels
+python3 -m pip install --user fastapi uvicorn numpy openai polars polars-ols pyarrow python-multipart scipy statsmodels
 
 # Start the FastAPI application with uvicorn
 echo "Starting FastAPI server on port 5000..."
-python3.11 -m uvicorn main:app --host 0.0.0.0 --port 5000
+python3 -m uvicorn main:app --host 0.0.0.0 --port 5000
