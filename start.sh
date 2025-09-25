@@ -14,6 +14,10 @@ echo "Ensuring pip is available..."
 python -m ensurepip --upgrade
 python -m pip install --upgrade pip
 
+# Install fundamental packages for dependency resolution
+echo "Installing setuptools and wheel..."
+python -m pip install --upgrade setuptools wheel
+
 # Install dependencies from pyproject.toml
 echo "Installing dependencies..."
 python -m pip install -e .
