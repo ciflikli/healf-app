@@ -21,7 +21,7 @@ CACHE_EXPIRY_HOURS = 1  # Cache results for 1 hour
 async def pregenerate_all_biomarker_predictions():
     """Generate predictions for all biomarkers at 3, 6, and 12 months and store in database"""
     try:
-        print("Starting FAST pre-generation using statistical analysis...")
+        print("Starting pre-generation using OpenAI GPT-4o with time-specific predictions...")
         
         # Get all biomarkers and supplements
         biomarkers = await get_biomarkers()
@@ -41,42 +41,9 @@ async def pregenerate_all_biomarker_predictions():
                 print(f"Generating prediction for {biomarker_name} at {months_ahead} months...")
                 
                 try:
-                    # Use fast statistical prediction instead of slow OpenAI calls
-                    from openai_insights import generate_fallback_biomarker_delta
-                    
-                    # Get current biomarker data
-                    current_biomarker = None
-                    for b in biomarkers:
-                        if b['name'].lower() == biomarker_name.lower():
-                            current_biomarker = b
-                            break
-                    
-                    if not current_biomarker:
-                        continue
-                        
-                    # Find relevant supplements
-                    relevant_supplements = []
-                    for supp in supplements:
-                        if supp.get('expected_biomarkers') and biomarker_name.lower() in supp.get('expected_biomarkers', '').lower():
-                            relevant_supplements.append(supp)
-                    
-                    # Define biomarker directions (True = higher is better)
-                    biomarker_directions = {
-                        'ldl cholesterol': False, 'ldl': False, 'total cholesterol': False, 'triglycerides': False,
-                        'hdl cholesterol': True, 'hdl': True, 'vitamin d': True, 'vitamin b12': True,
-                        'folate': True, 'iron': True, 'testosterone': True, 'creatinine': False,
-                        'glucose': False, 'hba1c': False, 'c-reactive protein': False, 'crp': False
-                    }
-                    
-                    is_higher_better = biomarker_directions.get(biomarker_name.lower(), None)
-                    
-                    # Generate fast statistical prediction
-                    prediction = generate_fallback_biomarker_delta(
-                        biomarker_name, 
-                        current_biomarker['value'],
-                        is_higher_better,
-                        relevant_supplements,
-                        months_ahead
+                    # Generate the prediction using OpenAI GPT-4o
+                    prediction = generate_biomarker_delta_predictions(
+                        biomarker_name, biomarkers, supplements, months_ahead
                     )
                     
                     # Store in database (replace if exists)

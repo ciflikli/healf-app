@@ -541,8 +541,11 @@ def generate_biomarker_delta_predictions(biomarker_name: str,
     
     try:
         if not openai_client:
+            print(f"⚠️  No OpenAI client, using fallback for {biomarker_name}")
             return generate_fallback_biomarker_delta(biomarker_name, current_value, 
                                                    is_higher_better, relevant_supplements, months_ahead)
+        
+        print(f"🤖 Making OpenAI GPT-4o call for {biomarker_name} at {months_ahead} months...")
         
         # Create context for OpenAI
         supplement_context = "No relevant supplements" if not relevant_supplements else "\n".join([
@@ -597,10 +600,12 @@ def generate_biomarker_delta_predictions(biomarker_name: str,
         """
         
         response = openai_client.chat.completions.create(
-            model="gpt-5",
+            model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"}
         )
+        
+        print(f"✅ OpenAI call successful for {biomarker_name} at {months_ahead} months")
         
         # Robust response validation
         if not response or not hasattr(response, 'choices') or len(response.choices) == 0:
@@ -617,7 +622,7 @@ def generate_biomarker_delta_predictions(biomarker_name: str,
         result = json.loads(content)
         
         # Add metadata
-        result["analysis_method"] = "OpenAI GPT-5 Analysis"
+        result["analysis_method"] = "OpenAI GPT-4o Analysis"
         result["current_value"] = current_value
         result["direction_context"] = direction_context
         
@@ -651,33 +656,43 @@ def generate_fallback_biomarker_delta(biomarker_name: str, current_value: float,
         # Apply biomarker-specific logic
         biomarker_lower = biomarker_name.lower()
         
+        # Time multiplier - effects should scale with time
+        time_factor = months_ahead / 6.0  # 6 months as baseline
+        
         if 'vitamin d' in biomarker_lower:
-            predicted_delta = 5 + supplement_effect * 10  # Vitamin D typically increases 5-15 ng/mL
-            reasoning = "Vitamin D supplementation typically shows 5-15 ng/mL increase"
+            base_delta = 5 + supplement_effect * 10  # Vitamin D typically increases 5-15 ng/mL
+            predicted_delta = base_delta * time_factor
+            reasoning = f"Vitamin D supplementation typically shows {base_delta:.1f} ng/mL increase over {months_ahead} months"
             
         elif 'cholesterol' in biomarker_lower and 'ldl' in biomarker_lower:
-            predicted_delta = -0.2 - supplement_effect * 0.3  # LDL typically decreases
-            reasoning = "LDL cholesterol often improves with dietary supplements"
+            base_delta = -0.2 - supplement_effect * 0.3  # LDL typically decreases
+            predicted_delta = base_delta * time_factor
+            reasoning = f"LDL cholesterol expected to improve over {months_ahead} months with supplements"
             
         elif 'hdl' in biomarker_lower:
-            predicted_delta = 0.1 + supplement_effect * 0.2  # HDL typically increases
-            reasoning = "HDL cholesterol may improve modestly with supplements"
+            base_delta = 0.1 + supplement_effect * 0.2  # HDL typically increases
+            predicted_delta = base_delta * time_factor
+            reasoning = f"HDL cholesterol may improve modestly over {months_ahead} months"
             
         elif any(term in biomarker_lower for term in ['crp', 'inflammation']):
-            predicted_delta = -0.5 - supplement_effect * 0.2  # Inflammation markers decrease
-            reasoning = "Anti-inflammatory effects from supplements"
+            base_delta = -0.5 - supplement_effect * 0.2  # Inflammation markers decrease
+            predicted_delta = base_delta * time_factor
+            reasoning = f"Anti-inflammatory effects expected over {months_ahead} months"
             
         else:
-            # General prediction based on direction
+            # General prediction based on direction with time scaling
             if is_higher_better:
-                predicted_delta = current_value * (0.02 + supplement_effect * 0.03)  # 2-5% increase
-                reasoning = "General positive trend with supplementation"
+                base_delta = current_value * (0.02 + supplement_effect * 0.03)  # 2-5% increase
+                predicted_delta = base_delta * time_factor
+                reasoning = f"General positive trend with supplementation over {months_ahead} months"
             elif is_higher_better is False:
-                predicted_delta = -current_value * (0.02 + supplement_effect * 0.03)  # 2-5% decrease
-                reasoning = "Expected improvement (lower values)"
+                base_delta = -current_value * (0.02 + supplement_effect * 0.03)  # 2-5% decrease
+                predicted_delta = base_delta * time_factor
+                reasoning = f"Expected improvement (lower values) over {months_ahead} months"
             else:
-                predicted_delta = current_value * 0.01  # 1% change
-                reasoning = "Minimal change expected"
+                base_delta = current_value * 0.01  # 1% change
+                predicted_delta = base_delta * time_factor
+                reasoning = f"Minimal change expected over {months_ahead} months"
         
         predicted_value = current_value + predicted_delta
         
